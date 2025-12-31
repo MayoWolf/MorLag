@@ -2,7 +2,7 @@ import React, { useEffect, useMemo, useRef } from "react";
 import maplibregl from "maplibre-gl";
 import "maplibre-gl/dist/maplibre-gl.css";
 import { bbox as turfBbox } from "@turf/turf";
-import type { Polygon, MultiPolygon } from "@turf/helpers";
+import type { Polygon, MultiPolygon } from "geojson";
 
 import { useStore } from "../state/store";
 import { LAYERS, SOURCES } from "./layers";

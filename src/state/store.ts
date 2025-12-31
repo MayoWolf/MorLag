@@ -1,5 +1,5 @@
 import { create } from "zustand";
-import type { Feature, FeatureCollection, Polygon, MultiPolygon } from "@turf/helpers";
+import type { Feature, FeatureCollection, Polygon, MultiPolygon } from "geojson";
 
 import countriesSample from "../data/countries.sample.geojson";
 import { applyRadar } from "../geo/radar";

@@ -1,5 +1,5 @@
 import { booleanPointInPolygon, bbox, bboxPolygon, point, featureCollection, voronoi } from "@turf/turf";
-import type { Polygon, MultiPolygon } from "@turf/helpers";
+import type { Polygon, MultiPolygon } from "geojson";
 import { bboxPolygonFor, intersect } from "./clip";
 
 export type AnyPoly = Polygon | MultiPolygon;

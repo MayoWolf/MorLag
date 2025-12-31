@@ -1,5 +1,5 @@
 import polygonClipping from "polygon-clipping";
-import type { Polygon, MultiPolygon, BBox, Feature } from "@turf/helpers";
+import type { Polygon, MultiPolygon, BBox, Feature } from "geojson";
 import { bbox, bboxPolygon } from "@turf/turf";
 
 export type AnyPoly = Polygon | MultiPolygon;
