@@ -5,7 +5,6 @@ import { bbox as turfBbox } from "@turf/turf";
 import type { Polygon, MultiPolygon } from "geojson";
 
 import { useStore } from "../state/store";
-import { LAYERS, SOURCES } from "./layers";
 
 type AnyPoly = Polygon | MultiPolygon;
 
@@ -15,6 +14,10 @@ function featureCollectionFromGeom(geom: AnyPoly | null) {
     features: geom ? [{ type: "Feature", properties: {}, geometry: geom }] : []
   } as any;
 }
+
+const SOURCE_ID = "candidate";
+const LAYER_FILL_ID = "candidate-fill";
+const LAYER_OUTLINE_ID = "candidate-outline";
 
 export default function MapView() {
   const containerRef = useRef<HTMLDivElement | null>(null);
@@ -26,34 +29,58 @@ export default function MapView() {
 
   const candidateFC = useMemo(() => featureCollectionFromGeom(candidate), [candidate]);
 
+  // Initialize map
   useEffect(() => {
     if (!containerRef.current) return;
 
+    const apiKey = import.meta.env.VITE_MAPTILER_KEY;
+    if (!apiKey) {
+      console.error("VITE_MAPTILER_KEY is not set");
+      return;
+    }
+
+    const styleUrl = `https://api.maptiler.com/maps/019b76bc-7266-7a42-84d1-d51d31d02477/style.json?key=${apiKey}`;
+
     const map = new maplibregl.Map({
       container: containerRef.current,
-      style: "https://demotiles.maplibre.org/style.json",
+      style: styleUrl,
       center: [0, 20],
       zoom: 2
     });
 
     map.addControl(new maplibregl.NavigationControl(), "top-right");
+    
+    // Add attribution control for MapTiler (style already includes attribution, but this ensures visibility)
+    map.addControl(new maplibregl.AttributionControl({
+      compact: false
+    }), "bottom-right");
+    
     mapRef.current = map;
 
     map.on("load", () => {
-      map.addSource(SOURCES.candidate, { type: "geojson", data: candidateFC });
+      // Add candidate source
+      map.addSource(SOURCE_ID, { type: "geojson", data: candidateFC });
 
+      // Add candidate fill layer
       map.addLayer({
-        id: LAYERS.candidateFill,
+        id: LAYER_FILL_ID,
         type: "fill",
-        source: SOURCES.candidate,
-        paint: { "fill-opacity": 0.35 }
+        source: SOURCE_ID,
+        paint: {
+          "fill-opacity": 0.35,
+          "fill-color": "#000000"
+        }
       });
 
+      // Add candidate outline layer
       map.addLayer({
-        id: LAYERS.candidateOutline,
+        id: LAYER_OUTLINE_ID,
         type: "line",
-        source: SOURCES.candidate,
-        paint: { "line-width": 2 }
+        source: SOURCE_ID,
+        paint: {
+          "line-width": 2,
+          "line-color": "#000000"
+        }
       });
 
       if (candidate) {
@@ -70,10 +97,11 @@ export default function MapView() {
     };
   }, []);
 
+  // Update candidate polygons
   useEffect(() => {
     const map = mapRef.current;
-    if (!map) return;
-    const src = map.getSource(SOURCES.candidate) as maplibregl.GeoJSONSource | undefined;
+    if (!map || !map.isStyleLoaded()) return;
+    const src = map.getSource(SOURCE_ID) as maplibregl.GeoJSONSource | undefined;
     if (!src) return;
     src.setData(candidateFC);
 
@@ -83,6 +111,7 @@ export default function MapView() {
     }
   }, [candidateFC, candidate]);
 
+  // Update seeker marker
   useEffect(() => {
     const map = mapRef.current;
     if (!map) return;
