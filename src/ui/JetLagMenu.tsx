@@ -113,26 +113,28 @@ const RADAR_DISTANCES: Array<{ miles: number; label: string }> = [
   { miles: 100, label: "100 MI" }
 ];
 
-const MATCHING_TILES: Array<{ label: string; kind: OsmKind }> = [
-  { label: "Airport", kind: "airport" },
-  { label: "Train Station", kind: "trainstation" },
-  { label: "Metro/Subway", kind: "metro_station" },
-  { label: "Highway Access", kind: "highway_access" },
-  { label: "Park", kind: "park" },
-  { label: "Hospital", kind: "hospital" },
-  { label: "Library", kind: "library" },
-  { label: "Museum", kind: "museum" },
-  { label: "Government", kind: "government" },
-  { label: "Stadium", kind: "stadium" },
-  { label: "University", kind: "university" },
-  { label: "School", kind: "school" },
-  { label: "Police", kind: "police" },
-  { label: "Fire Station", kind: "fire_station" },
-  { label: "Castle", kind: "castle" },
-  { label: "Ferry Terminal", kind: "ferry_terminal" }
+type MatchingTile =
+  | { id: "airport"; label: "Airport"; kind: OsmKind; disabled?: false }
+  | { id: "region"; label: "Region"; disabled?: false }
+  | { id: "landmass"; label: "Landmass"; disabled: true; reason: string };
+
+const MATCHING_TILES: MatchingTile[] = [
+  { id: "airport", label: "Airport", kind: "airport" },
+  { id: "region", label: "Region" },
+  { id: "landmass", label: "Landmass", disabled: true, reason: "Requires landmask dataset" }
 ];
 
-const MEASURING_TILES: Array<{ label: string; kind: OsmKind }> = [...MATCHING_TILES];
+const MEASURING_TILES: Array<{ label: string; kind: OsmKind }> = [
+  { label: "Airport", kind: "airport" },
+  { label: "Park", kind: "park" },
+  { label: "Mountain/Peak", kind: "peak" },
+  { label: "Zoo", kind: "zoo" },
+  { label: "Museum", kind: "museum" },
+  { label: "Hospital", kind: "hospital" },
+  { label: "Library", kind: "library" },
+  { label: "Government", kind: "government" },
+  { label: "Transit Station", kind: "transit_station" }
+];
 
 const TENTACLE_LABELS = [
   { label: "Airport", dist: "15 mi" },
@@ -179,11 +181,12 @@ export default function JetLagMenu() {
   const applyThermo = useStore(s => s.applyThermo);
   const applyPoiWithin = useStore(s => s.applyPoiWithin);
   const applyMatching = useStore(s => s.applyMatching);
+  const applyMatchingRegion = useStore(s => s.applyMatchingRegion);
   const applyMeasuring = useStore(s => s.applyMeasuring);
 
   const [poiModalKind, setPoiModalKind] = useState<PoiKind | null>(null);
   const [poiModalLabel, setPoiModalLabel] = useState<string>("");
-  const [matchingSelected, setMatchingSelected] = useState<OsmKind | null>(null);
+  const [matchingSelected, setMatchingSelected] = useState<MatchingTile["id"] | null>(null);
   const [measuringSelected, setMeasuringSelected] = useState<OsmKind | null>(null);
   const [measuringLastAnswer, setMeasuringLastAnswer] = useState<"CLOSER" | "FARTHER">("CLOSER");
   const [radarCustomMode, setRadarCustomMode] = useState<"HIT" | "MISS" | null>(null);
@@ -220,24 +223,33 @@ export default function JetLagMenu() {
               </div>
             )}
             <div className="jlGrid matching">
-              {MATCHING_TILES.map((t) => (
-                <button
-                  key={t.kind}
-                  className="jlTile matching"
-                  disabled={!candidate || !seeker}
-                  onClick={() => setMatchingSelected(t.kind)}
-                  type="button"
-                >
-                  {t.label}
-                </button>
-              ))}
+              {MATCHING_TILES.map((t) => {
+                const disabled = t.disabled || !candidate || !seeker;
+                const title =
+                  t.id === "landmass" ? t.reason : !seeker ? "Requires seeker GPS" : !candidate ? "Requires area" : "";
+                return (
+                  <button
+                    key={t.id}
+                    className={`jlTile matching${disabled ? " disabled" : ""}`}
+                    disabled={disabled}
+                    onClick={() => setMatchingSelected(t.id)}
+                    type="button"
+                    title={title}
+                  >
+                    {t.label}
+                  </button>
+                );
+              })}
             </div>
             {matchingSelected && (
               <div style={{ marginTop: 10, display: "flex", gap: 8, flexWrap: "wrap" }}>
                 <button
                   type="button"
                   className="tileBtn"
-                  onClick={() => applyMatching(matchingSelected, "YES")}
+                  onClick={() => {
+                    if (matchingSelected === "airport") return applyMatching("airport", "YES");
+                    if (matchingSelected === "region") return applyMatchingRegion("YES");
+                  }}
                   disabled={!candidate || !seeker}
                 >
                   YES
@@ -245,7 +257,10 @@ export default function JetLagMenu() {
                 <button
                   type="button"
                   className="tileBtn"
-                  onClick={() => applyMatching(matchingSelected, "NO")}
+                  onClick={() => {
+                    if (matchingSelected === "airport") return applyMatching("airport", "NO");
+                    if (matchingSelected === "region") return applyMatchingRegion("NO");
+                  }}
                   disabled={!candidate || !seeker}
                 >
                   NO

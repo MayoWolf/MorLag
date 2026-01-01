@@ -62,3 +62,21 @@ export async function geocode(q: string): Promise<SearchResult[]> {
   return data;
 }
 
+export type ReverseGeocodeResult = {
+  display_name?: string;
+  region?: string;
+  address?: Record<string, string>;
+};
+
+export async function reverseGeocode(lat: number, lon: number): Promise<ReverseGeocodeResult> {
+  const url = `/.netlify/functions/geocode?lat=${encodeURIComponent(lat)}&lon=${encodeURIComponent(lon)}`;
+  const response = await fetch(url);
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({}));
+    const provider = errorData.provider ? ` (${errorData.provider})` : "";
+    const errorMsg = errorData.error || response.statusText || "Unknown error";
+    throw new Error(`Reverse geocoding failed${provider}: ${response.status} ${errorMsg}`);
+  }
+  return await response.json();
+}
+

@@ -148,6 +148,92 @@ export const handler = async (event: any) => {
   }
 
   const query = event.queryStringParameters?.q;
+  const latStr = event.queryStringParameters?.lat;
+  const lonStr = event.queryStringParameters?.lon;
+
+  // Reverse geocode path
+  if (latStr && lonStr) {
+    const lat = parseFloat(latStr);
+    const lon = parseFloat(lonStr);
+    if (!Number.isFinite(lat) || !Number.isFinite(lon)) {
+      return {
+        statusCode: 400,
+        headers,
+        body: JSON.stringify({ error: "Invalid parameters: lat, lon must be numbers" })
+      };
+    }
+
+    const cacheKey = `rev:${lat.toFixed(2)},${lon.toFixed(2)}`;
+    if (cache.has(cacheKey)) {
+      return { statusCode: 200, headers, body: JSON.stringify(cache.get(cacheKey)) };
+    }
+
+    await throttle();
+
+    try {
+      const email = "morlag@users.noreply.github.com";
+      const url = `https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${encodeURIComponent(
+        lat
+      )}&lon=${encodeURIComponent(lon)}&zoom=10&addressdetails=1&email=${encodeURIComponent(email)}`;
+
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 8000);
+      try {
+        const response = await fetch(url, {
+          signal: controller.signal,
+          headers: {
+            "User-Agent": "MorLag/0.1 (https://morlag.netlify.app; contact: morlag@users.noreply.github.com)",
+            "Referer": "https://morlag.netlify.app/",
+            "Accept": "application/json",
+            "Accept-Language": "en"
+          }
+        });
+        clearTimeout(timeoutId);
+
+        if (!response.ok) {
+          throw new Error(`Nominatim reverse error: ${response.status} ${response.statusText}`);
+        }
+
+        const data = await response.json();
+        const addr = (data.address || {}) as Record<string, string>;
+        const region =
+          addr.state ||
+          addr.region ||
+          addr.province ||
+          addr.state_district ||
+          addr.county ||
+          "";
+
+        const result = {
+          display_name: data.display_name,
+          region: region || undefined,
+          address: addr
+        };
+
+        cache.set(cacheKey, result);
+
+        return { statusCode: 200, headers, body: JSON.stringify(result) };
+      } catch (e) {
+        clearTimeout(timeoutId);
+        if (e instanceof Error && e.name === "AbortError") {
+          return {
+            statusCode: 503,
+            headers,
+            body: JSON.stringify({ error: "Reverse geocode timeout", provider: "nominatim" })
+          };
+        }
+        throw e;
+      }
+    } catch (error) {
+      console.error("Reverse geocode error:", error);
+      return {
+        statusCode: 503,
+        headers,
+        body: JSON.stringify({ error: "Reverse geocode failed", provider: "nominatim" })
+      };
+    }
+  }
+
   if (!query || query.trim() === "") {
     return {
       statusCode: 400,

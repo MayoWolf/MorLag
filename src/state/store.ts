@@ -5,11 +5,13 @@ import { bbox as turfBbox } from "@turf/turf";
 import countriesSample from "../data/countries.sample.geojson";
 import { applyRadar } from "../geo/radar";
 import { applyThermometer } from "../geo/thermometer";
-import { geocode, normalizeGeometry, type SearchResult } from "../services/geocode";
+import { geocode, normalizeGeometry, reverseGeocode, type SearchResult } from "../services/geocode";
 import { fetchPois, type PoiKind } from "../services/overpass";
 import { expandBbox, buildBufferFromPoints, applyPoiWithin } from "../geo/poiWithin";
 import { applyMatchingSameNearest, applyMeasuringCloserFarther } from "../geo/matchingMeasuring";
 import type { OsmKind } from "../../shared/osmKinds";
+import { samplePointsInPoly } from "../geo/sampling";
+import { intersect } from "../geo/clip";
 
 type AnyPoly = Polygon | MultiPolygon;
 
@@ -125,6 +127,7 @@ type MorLagState = {
   applyThermo: (hotter: boolean) => void;
 
   applyMatching: (kind: OsmKind, answer: "YES" | "NO") => Promise<void>;
+  applyMatchingRegion: (answer: "YES" | "NO") => Promise<void>;
   applyMeasuring: (kind: OsmKind, answer: "CLOSER" | "FARTHER") => Promise<void>;
 
   undo: () => void;
@@ -385,6 +388,126 @@ export const useStore = create<MorLagState>((set, get) => {
       } catch (error) {
         console.error("Matching error:", error);
         set({ lastToast: error instanceof Error ? error.message : "Matching operation failed" });
+      }
+    },
+
+    applyMatchingRegion: async (answer: "YES" | "NO") => {
+      const candidate = get().candidate;
+      const seeker = get().seekerLngLat;
+      if (!candidate || !seeker) {
+        set({ lastToast: "Requires seeker GPS and a selected area." });
+        return;
+      }
+
+      const norm = (s: string) =>
+        s
+          .trim()
+          .toLowerCase()
+          .replace(/\s+/g, " ");
+
+      // Cache reverse lookups by rounded coordinates to avoid spamming
+      const cacheKeyFor = (lon: number, lat: number) => `${lat.toFixed(2)},${lon.toFixed(2)}`;
+      const localCache = new Map<string, string | null>();
+
+      try {
+        const seekerRev = await reverseGeocode(seeker[1], seeker[0]);
+        const seekerRegion = seekerRev.region ? norm(seekerRev.region) : "";
+        if (!seekerRegion) {
+          set({ lastToast: "Could not determine seeker region." });
+          return;
+        }
+
+        const { points, stepKm } = samplePointsInPoly(candidate, { maxPoints: 90, minStepKm: 25 });
+        if (points.length === 0) {
+          set({ lastToast: "No candidate samples to evaluate." });
+          return;
+        }
+
+        const kept: Array<{ lat: number; lon: number }> = [];
+        for (const [lon, lat] of points) {
+          const key = cacheKeyFor(lon, lat);
+          let region = localCache.get(key);
+          if (region === undefined) {
+            const rev = await reverseGeocode(lat, lon);
+            region = rev.region ? norm(rev.region) : null;
+            localCache.set(key, region);
+          }
+          const same = region ? region === seekerRegion : false;
+          const keep = answer === "YES" ? same : !same;
+          if (keep) kept.push({ lat, lon });
+        }
+
+        if (kept.length === 0) {
+          set({
+            candidate: null,
+            lastToast: "No possible area remains.",
+            undoStack: [...get().undoStack, candidate],
+            redoStack: [],
+            history: [
+              ...get().history,
+              {
+                id: uid(),
+                ts: Date.now(),
+                type: "MATCHING",
+                kind: "region",
+                answer,
+                poiCount: 0,
+                sampleCount: points.length,
+                keptCount: 0
+              }
+            ]
+          });
+          return;
+        }
+
+        const bufferKm = Math.max(10, stepKm * 0.9);
+        const buffer = buildBufferFromPoints(kept, bufferKm);
+        const clipped = intersect(candidate, buffer.geometry as AnyPoly);
+        if (!clipped) {
+          set({
+            candidate: null,
+            lastToast: "No possible area remains.",
+            undoStack: [...get().undoStack, candidate],
+            redoStack: [],
+            history: [
+              ...get().history,
+              {
+                id: uid(),
+                ts: Date.now(),
+                type: "MATCHING",
+                kind: "region",
+                answer,
+                poiCount: 0,
+                sampleCount: points.length,
+                keptCount: kept.length
+              }
+            ]
+          });
+          return;
+        }
+
+        set({
+          candidate: clipped,
+          lastToast: `Matching region ${answer}: kept ${kept.length}/${points.length}`,
+          undoStack: [...get().undoStack, candidate],
+          redoStack: [],
+          history: [
+            ...get().history,
+            {
+              id: uid(),
+              ts: Date.now(),
+              type: "MATCHING",
+              kind: "region",
+              answer,
+              poiCount: 0,
+              sampleCount: points.length,
+              keptCount: kept.length
+            }
+          ]
+        });
+      } catch (error) {
+        console.error("Matching region error:", error);
+        set({ lastToast: error instanceof Error ? error.message : "Region matching failed" });
       }
     },
 

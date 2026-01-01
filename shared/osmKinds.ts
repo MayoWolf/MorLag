@@ -26,7 +26,8 @@ export type OsmKind =
   | "fire_station"
   | "highway_access"
   | "park_national"
-  | "castle_fort";
+  | "castle_fort"
+  | "transit_station";
 
 export type OverpassClause = {
   key: string;
@@ -96,7 +97,10 @@ export const OSM_KIND_CLAUSES: Record<OsmKind, OverpassClause[]> = {
   fire_station: [{ key: "amenity", value: "fire_station" }],
 
   // Highway access: motorway junctions
-  highway_access: [{ key: "highway", value: "motorway_junction" }]
+  highway_access: [{ key: "highway", value: "motorway_junction" }],
+
+  // Transit station: railway=station OR public_transport=station
+  transit_station: [{ key: "railway", value: "station" }, { key: "public_transport", value: "station" }]
 };
 
 export function isOsmKind(x: string): x is OsmKind {
