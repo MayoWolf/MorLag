@@ -136,15 +136,15 @@ const MEASURING_TILES: Array<{ label: string; kind: OsmKind }> = [
   { label: "Transit Station", kind: "transit_station" }
 ];
 
-const TENTACLE_LABELS = [
-  { label: "Airport", dist: "15 mi" },
-  { label: "Park", dist: "15 mi" },
-  { label: "Mountain", dist: "15 mi" },
-  { label: "Transit", dist: "15 mi" },
-  { label: "Airport", dist: "1 mi" },
-  { label: "Park", dist: "1 mi" },
-  { label: "Mountain", dist: "1 mi" },
-  { label: "Transit", dist: "1 mi" }
+const TENTACLE_TILES: Array<{ label: string; kind: PoiKind; radiusMiles: number; distLabel: string }> = [
+  { label: "Airport", kind: "airport", radiusMiles: 15, distLabel: "15 mi" },
+  { label: "Park", kind: "park", radiusMiles: 15, distLabel: "15 mi" },
+  { label: "Mountain", kind: "peak", radiusMiles: 15, distLabel: "15 mi" },
+  { label: "Transit", kind: "transit_station", radiusMiles: 15, distLabel: "15 mi" },
+  { label: "Airport", kind: "airport", radiusMiles: 1, distLabel: "1 mi" },
+  { label: "Park", kind: "park", radiusMiles: 1, distLabel: "1 mi" },
+  { label: "Mountain", kind: "peak", radiusMiles: 1, distLabel: "1 mi" },
+  { label: "Transit", kind: "transit_station", radiusMiles: 1, distLabel: "1 mi" }
 ];
 
 // POI kinds for the menu
@@ -191,6 +191,11 @@ export default function JetLagMenu() {
   const [measuringLastAnswer, setMeasuringLastAnswer] = useState<"CLOSER" | "FARTHER">("CLOSER");
   const [radarCustomMode, setRadarCustomMode] = useState<"HIT" | "MISS" | null>(null);
   const [radarCustomMiles, setRadarCustomMiles] = useState<string>("");
+  const [tentacleSelected, setTentacleSelected] = useState<{
+    label: string;
+    kind: PoiKind;
+    radiusMiles: number;
+  } | null>(null);
 
   const handlePoiClick = (kind: PoiKind, label: string) => {
     setPoiModalKind(kind);
@@ -501,14 +506,59 @@ export default function JetLagMenu() {
                 <div className="jlCatSub">DRAW 4, PICK 2</div>
               </div>
             </div>
+            {!seeker && (
+              <div style={{ fontSize: "11px", color: "#d32f2f", fontWeight: 600, marginTop: "4px" }}>
+                Requires seeker GPS
+              </div>
+            )}
             <div className="jlGrid tentacles">
-              {TENTACLE_LABELS.map((t, i) => (
-                <button key={i} className="jlTile tentacles disabled" disabled style={{flexDirection:"column", gap:2, lineHeight:1}}>
-                  <span>{t.label}</span>
-                  <span style={{fontSize:"10px", opacity:0.8}}>{t.dist}</span>
-                </button>
-              ))}
+              {TENTACLE_TILES.map((t, i) => {
+                const disabled = !seeker || !candidate;
+                return (
+                  <button
+                    key={i}
+                    className={`jlTile tentacles${disabled ? " disabled" : ""}`}
+                    disabled={disabled}
+                    onClick={() => setTentacleSelected({ label: t.label, kind: t.kind, radiusMiles: t.radiusMiles })}
+                    style={{ flexDirection: "column", gap: 2, lineHeight: 1 }}
+                    type="button"
+                    title={!seeker ? "Requires seeker GPS" : !candidate ? "Requires area" : ""}
+                  >
+                    <span>{t.label}</span>
+                    <span style={{ fontSize: "10px", opacity: 0.8 }}>{t.distLabel}</span>
+                  </button>
+                );
+              })}
             </div>
+            {tentacleSelected && (
+              <div style={{ marginTop: 10, display: "flex", gap: 8, flexWrap: "wrap" }}>
+                <button
+                  type="button"
+                  className="tileBtn"
+                  onClick={async () => {
+                    await applyPoiWithin(tentacleSelected.kind, tentacleSelected.radiusMiles, "YES");
+                    setTentacleSelected(null);
+                  }}
+                  disabled={!candidate || !seeker}
+                >
+                  YES
+                </button>
+                <button
+                  type="button"
+                  className="tileBtn"
+                  onClick={async () => {
+                    await applyPoiWithin(tentacleSelected.kind, tentacleSelected.radiusMiles, "NO");
+                    setTentacleSelected(null);
+                  }}
+                  disabled={!candidate || !seeker}
+                >
+                  NO
+                </button>
+                <button type="button" className="tileBtn" onClick={() => setTentacleSelected(null)}>
+                  Clear
+                </button>
+              </div>
+            )}
 
             <div className="section-label" style={{ marginTop: "16px", fontSize: "10px", opacity: 0.7 }}>PLACES (OSM)</div>
             <div className="jlGrid poi">
@@ -517,7 +567,7 @@ export default function JetLagMenu() {
                   key={kind}
                   className="jlTile poi"
                   onClick={() => handlePoiClick(kind, label)}
-                  disabled={!candidate}
+                  disabled={!candidate || !seeker}
                 >
                   {label}
                 </button>
