@@ -122,9 +122,6 @@ export default function Controls() {
             })}
           </select>
         </div>
-        <small className="muted">
-          Replace <code>src/data/countries.sample.geojson</code> with a full world file when ready.
-        </small>
       </div>
 
       <div className="card">
