@@ -4,6 +4,7 @@ import { useStore } from "../state/store";
 const RADII = [0.5, 1, 3, 5, 10, 25, 50, 100];
 
 export default function Controls() {
+  const candidate = useStore(s => s.candidate);
   const seeker = useStore(s => s.seekerLngLat);
   const acc = useStore(s => s.seekerAccuracyM);
   const updateSeeker = useStore(s => s.updateSeekerFromGPS);
@@ -45,6 +46,11 @@ export default function Controls() {
       <div className="panel">
         <div className="panel-header search">SEARCH AREA</div>
         <div className="panel-content">
+          {!candidate && (
+            <div style={{ marginBottom: "10px", fontSize: "12px", color: "#666", fontStyle: "italic" }}>
+              Select an area to begin
+            </div>
+          )}
           <div className="row">
             <input
               type="text"
@@ -121,7 +127,7 @@ export default function Controls() {
                 key={`hit-${r}`}
                 className="tile-button orange"
                 onClick={() => applyRadar(r, true)}
-                disabled={!seeker}
+                disabled={!seeker || !candidate}
               >
                 {r} mi
               </button>
@@ -134,7 +140,7 @@ export default function Controls() {
                 key={`miss-${r}`}
                 className="tile-button orange"
                 onClick={() => applyRadar(r, false)}
-                disabled={!seeker}
+                disabled={!seeker || !candidate}
               >
                 {r} mi
               </button>
@@ -151,14 +157,14 @@ export default function Controls() {
             <button
               className="tile-button"
               onClick={setStart}
-              disabled={!seeker}
+              disabled={!seeker || !candidate}
             >
               Set Start
             </button>
             <button
               className="tile-button"
               onClick={setEnd}
-              disabled={!seeker}
+              disabled={!seeker || !candidate}
             >
               Set End
             </button>
@@ -174,14 +180,14 @@ export default function Controls() {
             <button
               className="tile-button yellow large"
               onClick={() => applyThermo(true)}
-              disabled={!thermoStart || !thermoEnd}
+              disabled={!candidate || !thermoStart || !thermoEnd}
             >
               Hotter
             </button>
             <button
               className="tile-button yellow large"
               onClick={() => applyThermo(false)}
-              disabled={!thermoStart || !thermoEnd}
+              disabled={!candidate || !thermoStart || !thermoEnd}
             >
               Colder
             </button>

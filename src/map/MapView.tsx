@@ -82,11 +82,6 @@ export default function MapView() {
           "line-color": "#000000"
         }
       });
-
-      if (candidate) {
-        const bb = turfBbox(candidate as any);
-        map.fitBounds([[bb[0], bb[1]], [bb[2], bb[3]]], { padding: 40, duration: 0 });
-      }
     });
 
     return () => {

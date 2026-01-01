@@ -96,18 +96,10 @@ type MorLagState = {
 export const useStore = create<MorLagState>((set, get) => {
   const countries = getCountries();
 
-  const initialIso = (countries[0]?.properties?.iso_a2 ?? "GB").toUpperCase();
-  const initialFeature = findCountry(countries, initialIso);
-  const initialCandidate = (initialFeature?.geometry ?? null) as AnyPoly | null;
-
-  const initialHistory: HistoryItem[] = initialFeature
-    ? [{ id: uid(), ts: Date.now(), type: "SET_COUNTRY", isoA2: initialIso, name: initialFeature.properties?.name }]
-    : [];
-
   return {
     countries,
-    selectedIsoA2: initialIso,
-    candidate: initialCandidate,
+    selectedIsoA2: "",
+    candidate: null,
 
     seekerLngLat: null,
     seekerAccuracyM: null,
@@ -115,7 +107,7 @@ export const useStore = create<MorLagState>((set, get) => {
     thermoStart: null,
     thermoEnd: null,
 
-    history: initialHistory,
+    history: [],
     undoStack: [],
     redoStack: [],
 
@@ -239,10 +231,8 @@ export const useStore = create<MorLagState>((set, get) => {
     },
 
     resetCandidateToCountry: () => {
-      const f = findCountry(get().countries, get().selectedIsoA2);
-      if (!f) return;
       set({
-        candidate: f.geometry as AnyPoly,
+        candidate: null,
         undoStack: [],
         redoStack: [],
         thermoStart: null,
