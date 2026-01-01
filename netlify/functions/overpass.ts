@@ -29,32 +29,10 @@ function roundBbox(south: number, west: number, north: number, east: number): st
   return `${south.toFixed(2)},${west.toFixed(2)},${north.toFixed(2)},${east.toFixed(2)}`;
 }
 
-// POI kind to Overpass tag mapping
-const POI_TAGS: Record<string, { node?: string; way?: string; relation?: string; special?: string }> = {
-  zoo: { node: '["tourism"="zoo"]', way: '["tourism"="zoo"]', relation: '["tourism"="zoo"]' },
-  hospital: { node: '["amenity"="hospital"]', way: '["amenity"="hospital"]', relation: '["amenity"="hospital"]' },
-  museum: { node: '["tourism"="museum"]', way: '["tourism"="museum"]', relation: '["tourism"="museum"]' },
-  library: { node: '["amenity"="library"]', way: '["amenity"="library"]', relation: '["amenity"="library"]' },
-  university: { node: '["amenity"="university"]', way: '["amenity"="university"]', relation: '["amenity"="university"]' },
-  school: { node: '["amenity"="school"]', way: '["amenity"="school"]', relation: '["amenity"="school"]' },
-  police: { node: '["amenity"="police"]', way: '["amenity"="police"]', relation: '["amenity"="police"]' },
-  firestation: { node: '["amenity"="fire_station"]', way: '["amenity"="fire_station"]', relation: '["amenity"="fire_station"]' },
-  courthouse: { node: '["amenity"="courthouse"]', way: '["amenity"="courthouse"]', relation: '["amenity"="courthouse"]' },
-  townhall: { node: '["amenity"="townhall"]', way: '["amenity"="townhall"]', relation: '["amenity"="townhall"]' },
-  embassy: { node: '["embassy"="yes"]', way: '["embassy"="yes"]', relation: '["embassy"="yes"]', special: "embassy" },
-  park: { node: '["leisure"="park"]', way: '["leisure"="park"]', relation: '["leisure"="park"]' },
-  stadium: { node: '["leisure"="stadium"]', way: '["leisure"="stadium"]', relation: '["leisure"="stadium"]' },
-  themepark: { node: '["tourism"="theme_park"]', way: '["tourism"="theme_park"]', relation: '["tourism"="theme_park"]' },
-  castle: { node: '["historic"="castle"]', way: '["historic"="castle"]', relation: '["historic"="castle"]' },
-  peak: { node: '["natural"="peak"]', way: '["natural"="peak"]', relation: '["natural"="peak"]' },
-  airport: { node: '["aeroway"="aerodrome"]', way: '["aeroway"="aerodrome"]', relation: '["aeroway"="aerodrome"]' },
-  trainstation: { node: '["railway"="station"]', way: '["railway"="station"]', relation: '["railway"="station"]' },
-  ferry: { node: '["amenity"="ferry_terminal"]', way: '["amenity"="ferry_terminal"]', relation: '["amenity"="ferry_terminal"]' }
-};
+import { isOsmKind, OSM_KIND_CLAUSES, type OsmKind } from "../../shared/osmKinds";
 
 function buildOverpassQuery(kind: string, south: number, west: number, north: number, east: number, limit: number): string {
-  const tags = POI_TAGS[kind];
-  if (!tags) {
+  if (!isOsmKind(kind)) {
     throw new Error(`Unknown POI kind: ${kind}`);
   }
 
@@ -70,14 +48,12 @@ function buildOverpassQuery(kind: string, south: number, west: number, north: nu
     parts.push(`relation["embassy"="yes"]${bbox};`);
     parts.push(`relation["amenity"="embassy"]${bbox};`);
   } else {
-    if (tags.node) {
-      parts.push(`node${tags.node}${bbox};`);
-    }
-    if (tags.way) {
-      parts.push(`way${tags.way}${bbox};`);
-    }
-    if (tags.relation) {
-      parts.push(`relation${tags.relation}${bbox};`);
+    const clauses = OSM_KIND_CLAUSES[kind as OsmKind] ?? [];
+    for (const c of clauses) {
+      const tag = `["${c.key}"="${c.value}"]`;
+      parts.push(`node${tag}${bbox};`);
+      parts.push(`way${tag}${bbox};`);
+      parts.push(`relation${tag}${bbox};`);
     }
   }
 
@@ -165,7 +141,7 @@ export const handler = async (event: any) => {
     };
   }
 
-  if (!POI_TAGS[kind]) {
+  if (!isOsmKind(kind)) {
     return {
       statusCode: 400,
       headers,

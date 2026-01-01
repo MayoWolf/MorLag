@@ -29,26 +29,9 @@ function roundBbox(south: number, west: number, north: number, east: number): st
   return `${south.toFixed(2)},${west.toFixed(2)},${north.toFixed(2)},${east.toFixed(2)}`;
 }
 
-export type PoiKind =
-  | "zoo"
-  | "hospital"
-  | "museum"
-  | "library"
-  | "university"
-  | "school"
-  | "police"
-  | "firestation"
-  | "courthouse"
-  | "townhall"
-  | "embassy"
-  | "park"
-  | "stadium"
-  | "themepark"
-  | "castle"
-  | "peak"
-  | "airport"
-  | "trainstation"
-  | "ferry";
+import type { OsmKind } from "../../shared/osmKinds";
+
+export type PoiKind = OsmKind;
 
 export type PoiPoint = {
   id: number;

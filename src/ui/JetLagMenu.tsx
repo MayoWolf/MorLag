@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { useStore } from "../state/store";
 import type { PoiKind } from "../services/overpass";
+import type { OsmKind } from "../../shared/osmKinds";
 
 // Icons
 const Icons = {
@@ -111,16 +112,26 @@ const RADII = [0.5, 1, 3, 5, 10, 25, 50, 100];
 const RADAR_HIT = RADII.slice(0, 4);
 const RADAR_MISS = RADII.slice(4);
 
-const MATCHING_LABELS = [
-  "Airport", "Train", "Metro", "Highway",
-  "Landmass", "Mountain", "Park", "Coast",
-  "Hospital", "Library", "Govt Building"
+const MATCHING_TILES: Array<{ label: string; kind: OsmKind }> = [
+  { label: "Airport", kind: "airport" },
+  { label: "Train Station", kind: "trainstation" },
+  { label: "Metro/Subway", kind: "metro_station" },
+  { label: "Highway Access", kind: "highway_access" },
+  { label: "Park", kind: "park" },
+  { label: "Hospital", kind: "hospital" },
+  { label: "Library", kind: "library" },
+  { label: "Museum", kind: "museum" },
+  { label: "Government", kind: "government" },
+  { label: "Stadium", kind: "stadium" },
+  { label: "University", kind: "university" },
+  { label: "School", kind: "school" },
+  { label: "Police", kind: "police" },
+  { label: "Fire Station", kind: "fire_station" },
+  { label: "Castle", kind: "castle" },
+  { label: "Ferry Terminal", kind: "ferry_terminal" }
 ];
 
-const MEASURING_LABELS = [
-  "Airport", "Park", "Mountain", "Zoo", "Museum",
-  "Hospital", "Library", "Govt Building", "Transit Stn"
-];
+const MEASURING_TILES: Array<{ label: string; kind: OsmKind }> = [...MATCHING_TILES];
 
 const TENTACLE_LABELS = [
   { label: "Airport", dist: "15 mi" },
@@ -171,9 +182,13 @@ export default function JetLagMenu() {
   const applyRadar = useStore(s => s.applyRadarNow);
   const applyThermo = useStore(s => s.applyThermo);
   const applyPoiWithin = useStore(s => s.applyPoiWithin);
+  const applyMatching = useStore(s => s.applyMatching);
+  const applyMeasuring = useStore(s => s.applyMeasuring);
 
   const [poiModalKind, setPoiModalKind] = useState<PoiKind | null>(null);
   const [poiModalLabel, setPoiModalLabel] = useState<string>("");
+  const [matchingSelected, setMatchingSelected] = useState<OsmKind | null>(null);
+  const [measuringSelected, setMeasuringSelected] = useState<OsmKind | null>(null);
 
   const handlePoiClick = (kind: PoiKind, label: string) => {
     setPoiModalKind(kind);
@@ -200,13 +215,47 @@ export default function JetLagMenu() {
                 <div className="jlCatSub">DRAW 3, PICK 1</div>
               </div>
             </div>
+            {!seeker && (
+              <div style={{ fontSize: "11px", color: "#d32f2f", fontWeight: 600, marginTop: "4px" }}>
+                Requires seeker GPS
+              </div>
+            )}
             <div className="jlGrid matching">
-              {MATCHING_LABELS.map((label, i) => (
-                <button key={i} className="jlTile matching disabled" disabled>
-                  {label}
+              {MATCHING_TILES.map((t) => (
+                <button
+                  key={t.kind}
+                  className="jlTile matching"
+                  disabled={!candidate || !seeker}
+                  onClick={() => setMatchingSelected(t.kind)}
+                  type="button"
+                >
+                  {t.label}
                 </button>
               ))}
             </div>
+            {matchingSelected && (
+              <div style={{ marginTop: 10, display: "flex", gap: 8, flexWrap: "wrap" }}>
+                <button
+                  type="button"
+                  className="tileBtn"
+                  onClick={() => applyMatching(matchingSelected, "YES")}
+                  disabled={!candidate || !seeker}
+                >
+                  YES
+                </button>
+                <button
+                  type="button"
+                  className="tileBtn"
+                  onClick={() => applyMatching(matchingSelected, "NO")}
+                  disabled={!candidate || !seeker}
+                >
+                  NO
+                </button>
+                <button type="button" className="tileBtn" onClick={() => setMatchingSelected(null)}>
+                  Clear
+                </button>
+              </div>
+            )}
           </div>
         </section>
 
@@ -220,13 +269,47 @@ export default function JetLagMenu() {
                 <div className="jlCatSub">DRAW 3, PICK 1</div>
               </div>
             </div>
+            {!seeker && (
+              <div style={{ fontSize: "11px", color: "#d32f2f", fontWeight: 600, marginTop: "4px" }}>
+                Requires seeker GPS
+              </div>
+            )}
             <div className="jlGrid measuring">
-              {MEASURING_LABELS.map((label, i) => (
-                <button key={i} className="jlTile measuring disabled" disabled>
-                  {label}
+              {MEASURING_TILES.map((t) => (
+                <button
+                  key={t.kind}
+                  className="jlTile measuring"
+                  disabled={!candidate || !seeker}
+                  onClick={() => setMeasuringSelected(t.kind)}
+                  type="button"
+                >
+                  {t.label}
                 </button>
               ))}
             </div>
+            {measuringSelected && (
+              <div style={{ marginTop: 10, display: "flex", gap: 8, flexWrap: "wrap" }}>
+                <button
+                  type="button"
+                  className="tileBtn"
+                  onClick={() => applyMeasuring(measuringSelected, "CLOSER")}
+                  disabled={!candidate || !seeker}
+                >
+                  CLOSER
+                </button>
+                <button
+                  type="button"
+                  className="tileBtn"
+                  onClick={() => applyMeasuring(measuringSelected, "FARTHER")}
+                  disabled={!candidate || !seeker}
+                >
+                  FARTHER
+                </button>
+                <button type="button" className="tileBtn" onClick={() => setMeasuringSelected(null)}>
+                  Clear
+                </button>
+              </div>
+            )}
           </div>
         </section>
 

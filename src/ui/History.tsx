@@ -14,54 +14,73 @@ export default function History() {
       <div className="history-list">
         {history.length === 0 && <small className="muted">No actions yet.</small>}
         {history.slice().reverse().map((h) => {
-          if (h.type === "SET_COUNTRY") {
-            return (
-              <div key={h.id} className="history-item">
-                <div className="history-timestamp">{fmt(h.ts)}</div>
-                <div className="history-action">
-                  <span className="history-action-label">Area:</span> {h.name ?? h.isoA2} ({h.isoA2})
+          switch (h.type) {
+            case "SET_COUNTRY":
+              return (
+                <div key={h.id} className="history-item">
+                  <div className="history-timestamp">{fmt(h.ts)}</div>
+                  <div className="history-action">
+                    <span className="history-action-label">Area:</span> {h.name ?? h.isoA2} ({h.isoA2})
+                  </div>
                 </div>
-              </div>
-            );
-          }
-          if (h.type === "SET_AREA") {
-            return (
-              <div key={h.id} className="history-item">
-                <div className="history-timestamp">{fmt(h.ts)}</div>
-                <div className="history-action">
-                  <span className="history-action-label">Area:</span> {h.label}
+              );
+            case "SET_AREA":
+              return (
+                <div key={h.id} className="history-item">
+                  <div className="history-timestamp">{fmt(h.ts)}</div>
+                  <div className="history-action">
+                    <span className="history-action-label">Area:</span> {h.label}
+                  </div>
                 </div>
-              </div>
-            );
-          }
-          if (h.type === "POI_WITHIN") {
-            return (
-              <div key={h.id} className="history-item">
-                <div className="history-timestamp">{fmt(h.ts)}</div>
-                <div className="history-action">
-                  <span className="history-action-label">POI:</span> {h.kind} {h.radiusMiles} mi {h.answer} ({h.poiCount} found)
+              );
+            case "POI_WITHIN":
+              return (
+                <div key={h.id} className="history-item">
+                  <div className="history-timestamp">{fmt(h.ts)}</div>
+                  <div className="history-action">
+                    <span className="history-action-label">POI:</span> {h.kind} {h.radiusMiles} mi {h.answer} ({h.poiCount} found)
+                  </div>
                 </div>
-              </div>
-            );
-          }
-          if (h.type === "RADAR") {
-            return (
-              <div key={h.id} className="history-item">
-                <div className="history-timestamp">{fmt(h.ts)}</div>
-                <div className="history-action">
-                  <span className="history-action-label">Radar:</span> {h.hit ? "Hit" : "Miss"} {h.radiusMiles} mi
+              );
+            case "RADAR":
+              return (
+                <div key={h.id} className="history-item">
+                  <div className="history-timestamp">{fmt(h.ts)}</div>
+                  <div className="history-action">
+                    <span className="history-action-label">Radar:</span> {h.hit ? "Hit" : "Miss"} {h.radiusMiles} mi
+                  </div>
                 </div>
-              </div>
-            );
+              );
+            case "THERMOMETER":
+              return (
+                <div key={h.id} className="history-item">
+                  <div className="history-timestamp">{fmt(h.ts)}</div>
+                  <div className="history-action">
+                    <span className="history-action-label">Thermometer:</span> {h.hotter ? "Hotter" : "Colder"}
+                  </div>
+                </div>
+              );
+            case "MATCHING":
+              return (
+                <div key={h.id} className="history-item">
+                  <div className="history-timestamp">{fmt(h.ts)}</div>
+                  <div className="history-action">
+                    <span className="history-action-label">Matching:</span> {h.kind} {h.answer} ({h.keptCount}/{h.sampleCount} samples, {h.poiCount} POIs)
+                  </div>
+                </div>
+              );
+            case "MEASURING":
+              return (
+                <div key={h.id} className="history-item">
+                  <div className="history-timestamp">{fmt(h.ts)}</div>
+                  <div className="history-action">
+                    <span className="history-action-label">Measuring:</span> {h.kind} {h.answer} ({h.keptCount}/{h.sampleCount} samples, {h.poiCount} POIs)
+                  </div>
+                </div>
+              );
+            default:
+              return null;
           }
-          return (
-            <div key={h.id} className="history-item">
-              <div className="history-timestamp">{fmt(h.ts)}</div>
-              <div className="history-action">
-                <span className="history-action-label">Thermometer:</span> {h.hotter ? "Hotter" : "Colder"}
-              </div>
-            </div>
-          );
         })}
       </div>
     </div>

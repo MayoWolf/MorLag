@@ -8,6 +8,8 @@ import { applyThermometer } from "../geo/thermometer";
 import { geocode, normalizeGeometry, type SearchResult } from "../services/geocode";
 import { fetchPois, type PoiKind } from "../services/overpass";
 import { expandBbox, buildBufferFromPoints, applyPoiWithin } from "../geo/poiWithin";
+import { applyMatchingSameNearest, applyMeasuringCloserFarther } from "../geo/matchingMeasuring";
+import type { OsmKind } from "../../shared/osmKinds";
 
 type AnyPoly = Polygon | MultiPolygon;
 
@@ -30,6 +32,26 @@ type HistoryItem =
       hotter: boolean;
       start: [number, number];
       end: [number, number];
+    }
+  | {
+      id: string;
+      ts: number;
+      type: "MATCHING";
+      kind: string;
+      answer: "YES" | "NO";
+      poiCount: number;
+      sampleCount: number;
+      keptCount: number;
+    }
+  | {
+      id: string;
+      ts: number;
+      type: "MEASURING";
+      kind: string;
+      answer: "CLOSER" | "FARTHER";
+      poiCount: number;
+      sampleCount: number;
+      keptCount: number;
     }
   | {
       id: string;
@@ -101,6 +123,9 @@ type MorLagState = {
 
   applyRadarNow: (radiusMiles: number, hit: boolean) => void;
   applyThermo: (hotter: boolean) => void;
+
+  applyMatching: (kind: OsmKind, answer: "YES" | "NO") => Promise<void>;
+  applyMeasuring: (kind: OsmKind, answer: "CLOSER" | "FARTHER") => Promise<void>;
 
   undo: () => void;
   redo: () => void;
@@ -288,6 +313,152 @@ export const useStore = create<MorLagState>((set, get) => {
           { id: uid(), ts: Date.now(), type: "THERMOMETER", hotter, start: a, end: b }
         ]
       });
+    },
+
+    applyMatching: async (kind: OsmKind, answer: "YES" | "NO") => {
+      const candidate = get().candidate;
+      const seeker = get().seekerLngLat;
+      if (!candidate || !seeker) {
+        set({ lastToast: "Requires seeker GPS and a selected area." });
+        return;
+      }
+
+      try {
+        const candidateFeature: Feature<AnyPoly> = { type: "Feature", geometry: candidate, properties: {} };
+        const bb = turfBbox(candidateFeature) as [number, number, number, number]; // [minLon,minLat,maxLon,maxLat]
+        const expanded = expandBbox([bb[1], bb[0], bb[3], bb[2]], 75); // ~75km padding
+        const pois = await fetchPois(kind as unknown as PoiKind, expanded, 800);
+        if (pois.length === 0) {
+          set({ lastToast: `No ${kind} POIs found nearby. Try a larger area.` });
+          return;
+        }
+
+        const { next, sampleCount, keptCount, seekerNearestId } = applyMatchingSameNearest({
+          candidate,
+          seekerLngLat: seeker,
+          pois,
+          answerYes: answer === "YES"
+        });
+
+        if (!next) {
+          set({
+            candidate: null,
+            lastToast: "No possible area remains.",
+            undoStack: [...get().undoStack, candidate],
+            redoStack: [],
+            history: [
+              ...get().history,
+              {
+                id: uid(),
+                ts: Date.now(),
+                type: "MATCHING",
+                kind,
+                answer,
+                poiCount: pois.length,
+                sampleCount,
+                keptCount
+              }
+            ]
+          });
+          return;
+        }
+
+        set({
+          candidate: next,
+          lastToast: `Matching ${kind}: kept ${keptCount}/${sampleCount} samples (nearest id ${seekerNearestId})`,
+          undoStack: [...get().undoStack, candidate],
+          redoStack: [],
+          history: [
+            ...get().history,
+            {
+              id: uid(),
+              ts: Date.now(),
+              type: "MATCHING",
+              kind,
+              answer,
+              poiCount: pois.length,
+              sampleCount,
+              keptCount
+            }
+          ]
+        });
+      } catch (error) {
+        console.error("Matching error:", error);
+        set({ lastToast: error instanceof Error ? error.message : "Matching operation failed" });
+      }
+    },
+
+    applyMeasuring: async (kind: OsmKind, answer: "CLOSER" | "FARTHER") => {
+      const candidate = get().candidate;
+      const seeker = get().seekerLngLat;
+      if (!candidate || !seeker) {
+        set({ lastToast: "Requires seeker GPS and a selected area." });
+        return;
+      }
+
+      try {
+        const candidateFeature: Feature<AnyPoly> = { type: "Feature", geometry: candidate, properties: {} };
+        const bb = turfBbox(candidateFeature) as [number, number, number, number]; // [minLon,minLat,maxLon,maxLat]
+        const expanded = expandBbox([bb[1], bb[0], bb[3], bb[2]], 75); // ~75km padding
+        const pois = await fetchPois(kind as unknown as PoiKind, expanded, 800);
+        if (pois.length === 0) {
+          set({ lastToast: `No ${kind} POIs found nearby. Try a larger area.` });
+          return;
+        }
+
+        const { next, sampleCount, keptCount, seekerDistanceM } = applyMeasuringCloserFarther({
+          candidate,
+          seekerLngLat: seeker,
+          pois,
+          answer
+        });
+
+        if (!next) {
+          set({
+            candidate: null,
+            lastToast: "No possible area remains.",
+            undoStack: [...get().undoStack, candidate],
+            redoStack: [],
+            history: [
+              ...get().history,
+              {
+                id: uid(),
+                ts: Date.now(),
+                type: "MEASURING",
+                kind,
+                answer,
+                poiCount: pois.length,
+                sampleCount,
+                keptCount
+              }
+            ]
+          });
+          return;
+        }
+
+        set({
+          candidate: next,
+          lastToast: `Measuring ${kind} ${answer}: kept ${keptCount}/${sampleCount} (seeker ~${Math.round(seekerDistanceM)}m)`,
+          undoStack: [...get().undoStack, candidate],
+          redoStack: [],
+          history: [
+            ...get().history,
+            {
+              id: uid(),
+              ts: Date.now(),
+              type: "MEASURING",
+              kind,
+              answer,
+              poiCount: pois.length,
+              sampleCount,
+              keptCount
+            }
+          ]
+        });
+      } catch (error) {
+        console.error("Measuring error:", error);
+        set({ lastToast: error instanceof Error ? error.message : "Measuring operation failed" });
+      }
     },
 
     undo: () => {
