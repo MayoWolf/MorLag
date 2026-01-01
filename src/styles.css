@@ -726,3 +726,66 @@ code {
   font-size: 12px;
   color: #666;
 }
+
+/* ============================================
+   JET LAG MENU
+   ============================================ */
+.jlMenu { background:#f5f5f5; border-top:1px solid rgba(0,0,0,.12); }
+.jlBanner { background:#D63B35; color:#fff; font-weight:900; letter-spacing:.08em; text-align:center; padding:14px 10px; text-transform:uppercase; }
+
+.jlColumns { display:grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap:0; }
+.jlCol { padding:14px 14px 18px; border-right:1px solid rgba(0,0,0,.12); }
+.jlCol:last-child { border-right:none; }
+
+@media (max-width: 900px){
+  .jlColumns { grid-template-columns: 1fr; }
+  .jlCol { border-right:none; border-bottom:1px solid rgba(0,0,0,.12); }
+  .jlCol:last-child { border-bottom:none; }
+}
+
+.jlCategory { display:flex; flex-direction:column; gap:10px; }
+.jlCatHeader { display:flex; align-items:center; gap:10px; }
+.jlCatIcon { width:34px; height:34px; border-radius:8px; display:flex; align-items:center; justify-content:center; color:#fff; font-weight:900; }
+.jlCatTitles { display:flex; flex-direction:column; line-height:1.05; }
+.jlCatTitle { font-weight:900; text-transform:uppercase; font-size:16px; }
+.jlCatSub { font-weight:800; text-transform:uppercase; font-size:12px; opacity:.85; }
+
+.jlGrid { display:grid; gap:10px; }
+.jlGrid.matching { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+.jlGrid.measuring { grid-template-columns: repeat(5, minmax(0, 1fr)); }
+.jlGrid.radar { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.jlGrid.photo { grid-template-columns: repeat(5, minmax(0, 1fr)); }
+.jlGrid.tentacles { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+.jlGrid.poi { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+@media (max-width: 420px){
+  .jlGrid.measuring, .jlGrid.photo { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+  .jlGrid.poi { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+}
+
+.jlTile {
+  border:none;
+  border-radius:10px;
+  min-height:44px;
+  padding:10px 8px;
+  color:#fff;
+  font-weight:900;
+  font-size:12px;
+  text-transform:uppercase;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  text-align:center;
+  cursor:pointer;
+  user-select:none;
+}
+.jlTile:active { transform: scale(0.98); }
+.jlTile.disabled { opacity:.35; cursor:not-allowed; }
+
+/* Color classes */
+.jlTile.matching, .jlCatIcon.matching { background:#1F2A44; }
+.jlTile.measuring, .jlCatIcon.measuring { background:#2E8B57; }
+.jlTile.radar, .jlCatIcon.radar { background:#E07A2F; }
+.jlTile.thermo, .jlCatIcon.thermo { background:#E3B22C; color:#2b2b2b; }
+.jlTile.photo, .jlCatIcon.photo { background:#8BB8D8; }
+.jlTile.tentacles, .jlCatIcon.tentacles { background:#6C4AA5; }
+.jlTile.poi, .jlCatIcon.poi { background:#6C4AA5; }
