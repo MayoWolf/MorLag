@@ -67,7 +67,7 @@ export default function App() {
             {lastToast}
           </div>
         )}
-        <div className="content-area">
+        <div className="sidebarInner">
           <Controls />
           <History />
         </div>

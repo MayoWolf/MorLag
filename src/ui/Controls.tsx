@@ -92,11 +92,11 @@ export default function Controls() {
   return (
     <>
       {/* SEARCH AREA */}
-      <div className="panel">
-        <div className="panel-header search">SEARCH AREA</div>
-        <div className="panel-content">
+      <section className="panel">
+        <div className="panelHeader search">SEARCH AREA</div>
+        <div className="panelBody">
           {!candidate && (
-            <div style={{ marginBottom: "10px", fontSize: "12px", color: "#666", fontStyle: "italic" }}>
+            <div style={{ fontSize: "12px", color: "#666", fontStyle: "italic" }}>
               Select an area to begin
             </div>
           )}
@@ -112,7 +112,7 @@ export default function Controls() {
               }}
               placeholder="e.g., Los Angeles, California, Europe"
             />
-            <button onClick={handleSearch}>Search</button>
+            <button className="btn" onClick={handleSearch}>Search</button>
           </div>
           {searchResults.length > 0 && (
             <div className="search-results">
@@ -139,20 +139,21 @@ export default function Controls() {
             </div>
           )}
         </div>
-      </div>
+      </section>
 
       {/* SEEKER GPS */}
-      <div className="panel">
-        <div className="panel-header seeker">SEEKER GPS</div>
-        <div className="panel-content">
+      <section className="panel">
+        <div className="panelHeader seeker">SEEKER GPS</div>
+        <div className="panelBody">
           <div className="row">
             <button
-              className="primary"
+              className="btn primary"
               onClick={() => updateSeeker().catch(err => alert(err?.message ?? String(err)))}
             >
               Use GPS
             </button>
             <button
+              className="btn"
               onClick={() => {
                 if (isTrackingGPS) {
                   stopTracking();
@@ -167,9 +168,9 @@ export default function Controls() {
             >
               {isTrackingGPS ? "Stop Tracking" : "Track GPS"}
             </button>
-            <button onClick={reset}>Reset Area</button>
-            <button onClick={undo}>Undo</button>
-            <button onClick={redo}>Redo</button>
+            <button className="btn" onClick={reset}>Reset Area</button>
+            <button className="btn" onClick={undo}>Undo</button>
+            <button className="btn" onClick={redo}>Redo</button>
           </div>
           {seeker ? (
             <div className="coords-display">
@@ -188,18 +189,18 @@ export default function Controls() {
             </div>
           )}
         </div>
-      </div>
+      </section>
 
       {/* RADAR */}
-      <div className="panel">
-        <div className="panel-header radar">RADAR</div>
-        <div className="panel-content">
+      <section className="panel">
+        <div className="panelHeader radar">RADAR</div>
+        <div className="panelBody">
           <div className="section-label">Hit</div>
-          <div className="tile-grid">
+          <div className="tileGrid">
             {RADII.map((r) => (
               <button
                 key={`hit-${r}`}
-                className="tile-button orange"
+                className="tileBtn orange"
                 onClick={() => applyRadar(r, true)}
                 disabled={!seeker || !candidate}
               >
@@ -207,12 +208,12 @@ export default function Controls() {
               </button>
             ))}
           </div>
-          <div className="section-label" style={{ marginTop: "12px" }}>Miss</div>
-          <div className="tile-grid">
+          <div className="section-label">Miss</div>
+          <div className="tileGrid">
             {RADII.map((r) => (
               <button
                 key={`miss-${r}`}
-                className="tile-button orange"
+                className="tileBtn orange"
                 onClick={() => applyRadar(r, false)}
                 disabled={!seeker || !candidate}
               >
@@ -221,22 +222,22 @@ export default function Controls() {
             ))}
           </div>
         </div>
-      </div>
+      </section>
 
       {/* THERMOMETER */}
-      <div className="panel">
-        <div className="panel-header thermometer">THERMOMETER</div>
-        <div className="panel-content">
-          <div className="tile-grid" style={{ gridTemplateColumns: "repeat(2, 1fr)" }}>
+      <section className="panel">
+        <div className="panelHeader thermometer">THERMOMETER</div>
+        <div className="panelBody">
+          <div className="tileGrid" style={{ gridTemplateColumns: "repeat(2, 1fr)" }}>
             <button
-              className="tile-button"
+              className="tileBtn"
               onClick={setStart}
               disabled={!seeker || !candidate}
             >
               Set Start
             </button>
             <button
-              className="tile-button"
+              className="tileBtn"
               onClick={setEnd}
               disabled={!seeker || !candidate}
             >
@@ -244,22 +245,22 @@ export default function Controls() {
             </button>
           </div>
           {(thermoStart || thermoEnd) && (
-            <div className="coords-display" style={{ marginTop: "8px" }}>
+            <div className="coords-display">
               {thermoStart ? `Start: ${thermoStart[0].toFixed(4)}, ${thermoStart[1].toFixed(4)}` : "Start: not set"}
               <br />
               {thermoEnd ? `End: ${thermoEnd[0].toFixed(4)}, ${thermoEnd[1].toFixed(4)}` : "End: not set"}
             </div>
           )}
-          <div className="tile-grid" style={{ gridTemplateColumns: "repeat(2, 1fr)", marginTop: "12px" }}>
+          <div className="tileGrid" style={{ gridTemplateColumns: "repeat(2, 1fr)" }}>
             <button
-              className="tile-button yellow large"
+              className="tileBtn yellow large"
               onClick={() => applyThermo(true)}
               disabled={!candidate || !thermoStart || !thermoEnd}
             >
               Hotter
             </button>
             <button
-              className="tile-button yellow large"
+              className="tileBtn yellow large"
               onClick={() => applyThermo(false)}
               disabled={!candidate || !thermoStart || !thermoEnd}
             >
@@ -267,19 +268,18 @@ export default function Controls() {
             </button>
           </div>
         </div>
-      </div>
+      </section>
 
       {/* POI (Overpass) - Debug Section */}
-      <div className="panel">
-        <div className="panel-header poi">POI (Overpass)</div>
-        <div className="panel-content">
+      <section className="panel">
+        <div className="panelHeader poi">POI (Overpass)</div>
+        <div className="panelBody">
           {import.meta.env.DEV && (
             <div style={{ 
-              marginBottom: "12px", 
               padding: "8px", 
               background: "#fff3cd", 
               border: "1px solid #ffc107",
-              borderRadius: "4px",
+              borderRadius: "8px",
               fontSize: "12px",
               color: "#856404"
             }}>
@@ -287,13 +287,13 @@ export default function Controls() {
             </div>
           )}
           <div className="section-label">Kind</div>
-          <div className="tile-grid poi-grid">
+          <div className="tileGrid poi-grid">
             {["Zoo", "Hospital", "Museum", "Airport", "Library", "Park", "Train Station"].map((label) => {
               const kindKey = label.toLowerCase().replace(" ", "");
               return (
                 <button
                   key={label}
-                  className={`tile-button ${selectedPoiKind === kindKey ? "selected" : ""}`}
+                  className={`tileBtn ${selectedPoiKind === kindKey ? "selected" : ""}`}
                   onClick={() => setSelectedPoiKind(kindKey)}
                 >
                   {label}
@@ -303,21 +303,21 @@ export default function Controls() {
           </div>
           {selectedPoiKind && (
             <>
-              <div className="section-label" style={{ marginTop: "12px" }}>Radius</div>
-              <div className="tile-grid">
+              <div className="section-label">Radius</div>
+              <div className="tileGrid">
                 {[1, 3, 5, 10].map((r) => (
                   <button
                     key={r}
-                    className={`tile-button ${selectedRadius === r ? "selected" : ""}`}
+                    className={`tileBtn ${selectedRadius === r ? "selected" : ""}`}
                     onClick={() => setSelectedRadius(r)}
                   >
                     {r} mi
                   </button>
                 ))}
               </div>
-              <div className="tile-grid" style={{ gridTemplateColumns: "repeat(2, 1fr)", marginTop: "12px" }}>
+              <div className="tileGrid" style={{ gridTemplateColumns: "repeat(2, 1fr)" }}>
                 <button
-                  className="tile-button yellow large"
+                  className="tileBtn yellow large"
                   onClick={() => {
                     if (selectedPoiKind) {
                       const kindMap: Record<string, string> = {
@@ -342,7 +342,7 @@ export default function Controls() {
                   YES
                 </button>
                 <button
-                  className="tile-button yellow large"
+                  className="tileBtn yellow large"
                   onClick={() => {
                     if (selectedPoiKind) {
                       const kindMap: Record<string, string> = {
@@ -369,22 +369,19 @@ export default function Controls() {
               </div>
             </>
           )}
-          <div style={{ marginTop: "16px", paddingTop: "16px", borderTop: "1px solid #ddd" }}>
+          <div style={{ paddingTop: "10px", borderTop: "1px solid rgba(0,0,0,0.12)" }}>
             <button
-              className="tile-button"
+              className="tileBtn"
               onClick={handleTestOverpass}
               disabled={!selectedPoiKind || isTestingOverpass}
             >
               {isTestingOverpass ? "Testing..." : "Test Overpass"}
             </button>
             {overpassTestResult && (
-              <div style={{
+              <div className={overpassTestResult.error ? "errorBox" : ""} style={{
                 marginTop: "8px",
-                padding: "8px",
-                background: overpassTestResult.error ? "#ffebee" : "#e8f5e9",
-                border: `1px solid ${overpassTestResult.error ? "#f44336" : "#4caf50"}`,
-                borderRadius: "4px",
-                fontSize: "12px",
+                background: overpassTestResult.error ? "rgba(220,0,0,0.08)" : "#e8f5e9",
+                border: overpassTestResult.error ? "1px solid rgba(220,0,0,0.35)" : "1px solid #4caf50",
                 color: overpassTestResult.error ? "#c62828" : "#2e7d32"
               }}>
                 {overpassTestResult.error ? (
@@ -396,7 +393,7 @@ export default function Controls() {
             )}
           </div>
         </div>
-      </div>
+      </section>
 
       <PoiMenu />
     </>

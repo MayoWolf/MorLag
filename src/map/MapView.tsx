@@ -142,5 +142,5 @@ export default function MapView() {
     seekerMarkerRef.current = m;
   }, [seeker]);
 
-  return <div className="map" ref={containerRef} />;
+  return <div className="mapRoot" ref={containerRef} />;
 }
