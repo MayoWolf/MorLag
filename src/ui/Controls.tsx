@@ -1,6 +1,7 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import { useStore } from "../state/store";
 import PoiMenu from "./PoiMenu";
+import { testOverpass } from "../services/overpass";
 
 const RADII = [0.5, 1, 3, 5, 10, 25, 50, 100];
 
@@ -31,6 +32,12 @@ export default function Controls() {
   const setSearchQuery = useStore(s => s.setSearchQuery);
   const runSearch = useStore(s => s.runSearch);
   const selectSearchResult = useStore(s => s.selectSearchResult);
+  const applyPoiWithin = useStore(s => s.applyPoiWithin);
+
+  const [selectedPoiKind, setSelectedPoiKind] = useState<string | null>(null);
+  const [selectedRadius, setSelectedRadius] = useState(5);
+  const [isTestingOverpass, setIsTestingOverpass] = useState(false);
+  const [overpassTestResult, setOverpassTestResult] = useState<{ message: string; error?: boolean } | null>(null);
 
   const handleSearch = async () => {
     try {
@@ -43,6 +50,43 @@ export default function Controls() {
   const truncateName = (name: string, maxLength: number = 50) => {
     if (name.length <= maxLength) return name;
     return name.slice(0, maxLength - 3) + "...";
+  };
+
+  const handleTestOverpass = async () => {
+    if (!selectedPoiKind) return;
+    
+    setIsTestingOverpass(true);
+    setOverpassTestResult(null);
+    
+    try {
+      // Map UI label to kind string
+      const kindMap: Record<string, string> = {
+        "zoo": "zoo",
+        "hospital": "hospital",
+        "museum": "museum",
+        "airport": "airport",
+        "library": "library",
+        "park": "park",
+        "trainstation": "trainstation"
+      };
+      const mappedKind = kindMap[selectedPoiKind];
+      if (!mappedKind) {
+        throw new Error(`Unknown kind: ${selectedPoiKind}`);
+      }
+      
+      const result = await testOverpass(mappedKind);
+      setOverpassTestResult({
+        message: `Fetched ${result.count} POIs`,
+        error: false
+      });
+    } catch (err) {
+      setOverpassTestResult({
+        message: err instanceof Error ? err.message : String(err),
+        error: true
+      });
+    } finally {
+      setIsTestingOverpass(false);
+    }
   };
 
   return (
@@ -224,6 +268,137 @@ export default function Controls() {
           </div>
         </div>
       </div>
+
+      {/* POI (Overpass) - Debug Section */}
+      <div className="panel">
+        <div className="panel-header poi">POI (Overpass)</div>
+        <div className="panel-content">
+          {import.meta.env.DEV && (
+            <div style={{ 
+              marginBottom: "12px", 
+              padding: "8px", 
+              background: "#fff3cd", 
+              border: "1px solid #ffc107",
+              borderRadius: "4px",
+              fontSize: "12px",
+              color: "#856404"
+            }}>
+              Run <code>npx netlify dev</code> to enable functions locally.
+            </div>
+          )}
+          <div className="section-label">Kind</div>
+          <div className="tile-grid poi-grid">
+            {["Zoo", "Hospital", "Museum", "Airport", "Library", "Park", "Train Station"].map((label) => {
+              const kindKey = label.toLowerCase().replace(" ", "");
+              return (
+                <button
+                  key={label}
+                  className={`tile-button ${selectedPoiKind === kindKey ? "selected" : ""}`}
+                  onClick={() => setSelectedPoiKind(kindKey)}
+                >
+                  {label}
+                </button>
+              );
+            })}
+          </div>
+          {selectedPoiKind && (
+            <>
+              <div className="section-label" style={{ marginTop: "12px" }}>Radius</div>
+              <div className="tile-grid">
+                {[1, 3, 5, 10].map((r) => (
+                  <button
+                    key={r}
+                    className={`tile-button ${selectedRadius === r ? "selected" : ""}`}
+                    onClick={() => setSelectedRadius(r)}
+                  >
+                    {r} mi
+                  </button>
+                ))}
+              </div>
+              <div className="tile-grid" style={{ gridTemplateColumns: "repeat(2, 1fr)", marginTop: "12px" }}>
+                <button
+                  className="tile-button yellow large"
+                  onClick={() => {
+                    if (selectedPoiKind) {
+                      const kindMap: Record<string, string> = {
+                        "zoo": "zoo",
+                        "hospital": "hospital",
+                        "museum": "museum",
+                        "airport": "airport",
+                        "library": "library",
+                        "park": "park",
+                        "trainstation": "trainstation"
+                      };
+                      const mappedKind = kindMap[selectedPoiKind];
+                      if (mappedKind) {
+                        applyPoiWithin(mappedKind as any, selectedRadius, "YES").catch(err => {
+                          alert(err instanceof Error ? err.message : String(err));
+                        });
+                      }
+                    }
+                  }}
+                  disabled={!candidate}
+                >
+                  YES
+                </button>
+                <button
+                  className="tile-button yellow large"
+                  onClick={() => {
+                    if (selectedPoiKind) {
+                      const kindMap: Record<string, string> = {
+                        "zoo": "zoo",
+                        "hospital": "hospital",
+                        "museum": "museum",
+                        "airport": "airport",
+                        "library": "library",
+                        "park": "park",
+                        "trainstation": "trainstation"
+                      };
+                      const mappedKind = kindMap[selectedPoiKind];
+                      if (mappedKind) {
+                        applyPoiWithin(mappedKind as any, selectedRadius, "NO").catch(err => {
+                          alert(err instanceof Error ? err.message : String(err));
+                        });
+                      }
+                    }
+                  }}
+                  disabled={!candidate}
+                >
+                  NO
+                </button>
+              </div>
+            </>
+          )}
+          <div style={{ marginTop: "16px", paddingTop: "16px", borderTop: "1px solid #ddd" }}>
+            <button
+              className="tile-button"
+              onClick={handleTestOverpass}
+              disabled={!selectedPoiKind || isTestingOverpass}
+            >
+              {isTestingOverpass ? "Testing..." : "Test Overpass"}
+            </button>
+            {overpassTestResult && (
+              <div style={{
+                marginTop: "8px",
+                padding: "8px",
+                background: overpassTestResult.error ? "#ffebee" : "#e8f5e9",
+                border: `1px solid ${overpassTestResult.error ? "#f44336" : "#4caf50"}`,
+                borderRadius: "4px",
+                fontSize: "12px",
+                color: overpassTestResult.error ? "#c62828" : "#2e7d32"
+              }}>
+                {overpassTestResult.error ? (
+                  <><strong>Error:</strong> {overpassTestResult.message}</>
+                ) : (
+                  <><strong>Success:</strong> {overpassTestResult.message}</>
+                )}
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+
+      <PoiMenu />
     </>
   );
 }

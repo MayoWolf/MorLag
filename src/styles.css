@@ -506,6 +506,14 @@ code {
   border-color: #7b1fa2;
 }
 
+code {
+  background: rgba(0, 0, 0, 0.1);
+  padding: 2px 4px;
+  border-radius: 3px;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 11px;
+}
+
 /* Quick Search Overlay */
 .quick-search-overlay {
   position: fixed;

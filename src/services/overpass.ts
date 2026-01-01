@@ -94,3 +94,29 @@ export async function fetchPois(
   return data.points;
 }
 
+/**
+ * Test Overpass function with a fixed bbox (London area)
+ */
+export async function testOverpass(kind: string): Promise<{ count: number; points: PoiPoint[] }> {
+  // Fixed bbox for London area (south, west, north, east)
+  const south = 51.3;
+  const west = -0.5;
+  const north = 51.7;
+  const east = 0.2;
+
+  const url = `/.netlify/functions/overpass?kind=${encodeURIComponent(kind)}&south=${south}&west=${west}&north=${north}&east=${east}`;
+  
+  const response = await fetch(url);
+  
+  if (!response.ok) {
+    const errorText = await response.text().catch(() => response.statusText);
+    throw new Error(`Overpass test failed: ${response.status} ${errorText}`);
+  }
+
+  const data: PoiResult = await response.json();
+  return {
+    count: data.count,
+    points: data.points
+  };
+}
+
