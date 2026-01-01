@@ -119,174 +119,186 @@ export default function JetLagMenu() {
       <div className="jlBanner">QUESTION MENU</div>
       <div className="jlColumns">
         {/* MATCHING */}
-        <div className="jlCategory">
-          <div className="jlCategoryHeader">
-            <div className="jlIcon matching"></div>
-            <div>
-              <div className="jlTitle">MATCHING</div>
-              <div className="jlSubtitle">DRAW 3, PICK 1</div>
+        <section className="jlCol">
+          <div className="jlCategory">
+            <div className="jlCatHeader">
+              <div className="jlCatIcon matching"></div>
+              <div className="jlCatTitles">
+                <div className="jlCatTitle">MATCHING</div>
+                <div className="jlCatSub">DRAW 3, PICK 1</div>
+              </div>
+            </div>
+            <div className="jlGrid matching">
+              {Array.from({ length: 16 }).map((_, i) => (
+                <button key={i} className="jlTile matching disabled" disabled>
+                  {/* Placeholder */}
+                </button>
+              ))}
             </div>
           </div>
-          <div className="jlGrid matching">
-            {Array.from({ length: 16 }).map((_, i) => (
-              <button key={i} className="jlTile matching" disabled>
-                {/* Placeholder tiles */}
-              </button>
-            ))}
-          </div>
-        </div>
+        </section>
 
         {/* MEASURING */}
-        <div className="jlCategory">
-          <div className="jlCategoryHeader">
-            <div className="jlIcon measuring"></div>
-            <div>
-              <div className="jlTitle">MEASURING</div>
-              <div className="jlSubtitle">DRAW 3, PICK 1</div>
+        <section className="jlCol">
+          <div className="jlCategory">
+            <div className="jlCatHeader">
+              <div className="jlCatIcon measuring"></div>
+              <div className="jlCatTitles">
+                <div className="jlCatTitle">MEASURING</div>
+                <div className="jlCatSub">DRAW 3, PICK 1</div>
+              </div>
+            </div>
+            <div className="jlGrid measuring">
+              {Array.from({ length: 20 }).map((_, i) => (
+                <button key={i} className="jlTile measuring disabled" disabled>
+                  {/* Placeholder */}
+                </button>
+              ))}
             </div>
           </div>
-          <div className="jlGrid measuring">
-            {Array.from({ length: 20 }).map((_, i) => (
-              <button key={i} className="jlTile measuring" disabled>
-                {/* Placeholder tiles */}
-              </button>
-            ))}
-          </div>
-        </div>
+        </section>
 
         {/* RADAR */}
-        <div className="jlCategory">
-          <div className="jlCategoryHeader">
-            <div className="jlIcon radar"></div>
-            <div>
-              <div className="jlTitle">RADAR</div>
-              <div className="jlSubtitle">DRAW 2, PICK 1</div>
+        <section className="jlCol">
+          <div className="jlCategory">
+            <div className="jlCatHeader">
+              <div className="jlCatIcon radar"></div>
+              <div className="jlCatTitles">
+                <div className="jlCatTitle">RADAR</div>
+                <div className="jlCatSub">DRAW 2, PICK 1</div>
+              </div>
+            </div>
+            <div className="jlGrid radar">
+              {RADII.map((r) => (
+                <button
+                  key={`hit-${r}`}
+                  className="jlTile radar"
+                  onClick={() => applyRadar(r, true)}
+                  disabled={!seeker || !candidate}
+                >
+                  HIT {r}
+                </button>
+              ))}
+              {RADII.map((r) => (
+                <button
+                  key={`miss-${r}`}
+                  className="jlTile radar"
+                  onClick={() => applyRadar(r, false)}
+                  disabled={!seeker || !candidate}
+                >
+                  MISS {r}
+                </button>
+              ))}
             </div>
           </div>
-          <div className="jlGrid radar">
-            {RADII.map((r) => (
+        </section>
+
+        {/* THERMOMETER / TENTACLES / POI */}
+        <section className="jlCol">
+          <div className="jlCategory">
+            <div className="jlCatHeader">
+              <div className="jlCatIcon thermo"></div>
+              <div className="jlCatTitles">
+                <div className="jlCatTitle">THERMOMETER</div>
+                <div className="jlCatSub">DRAW 2, PICK 1</div>
+              </div>
+            </div>
+            <div className="jlGrid thermo">
               <button
-                key={`hit-${r}`}
-                className="jlTile radar"
-                onClick={() => applyRadar(r, true)}
+                className="jlTile thermo"
+                onClick={setStart}
                 disabled={!seeker || !candidate}
               >
-                HIT {r}
+                Set Start
               </button>
-            ))}
-            {RADII.map((r) => (
               <button
-                key={`miss-${r}`}
-                className="jlTile radar"
-                onClick={() => applyRadar(r, false)}
+                className="jlTile thermo"
+                onClick={setEnd}
                 disabled={!seeker || !candidate}
               >
-                MISS {r}
+                Set End
               </button>
-            ))}
-          </div>
-        </div>
-
-        {/* THERMOMETER */}
-        <div className="jlCategory">
-          <div className="jlCategoryHeader">
-            <div className="jlIcon thermo"></div>
-            <div>
-              <div className="jlTitle">THERMOMETER</div>
-              <div className="jlSubtitle">DRAW 2, PICK 1</div>
-            </div>
-          </div>
-          <div className="jlGrid thermo">
-            <button
-              className="jlTile thermo"
-              onClick={setStart}
-              disabled={!seeker || !candidate}
-            >
-              Set Start
-            </button>
-            <button
-              className="jlTile thermo"
-              onClick={setEnd}
-              disabled={!seeker || !candidate}
-            >
-              Set End
-            </button>
-            <button
-              className="jlTile thermo"
-              onClick={() => applyThermo(true)}
-              disabled={!candidate || !thermoStart || !thermoEnd}
-            >
-              Hotter
-            </button>
-            <button
-              className="jlTile thermo"
-              onClick={() => applyThermo(false)}
-              disabled={!candidate || !thermoStart || !thermoEnd}
-            >
-              Colder
-            </button>
-          </div>
-
-          {/* TENTACLES (below Thermometer) */}
-          <div className="jlCategoryHeader" style={{ marginTop: "20px" }}>
-            <div className="jlIcon tentacles"></div>
-            <div>
-              <div className="jlTitle">TENTACLES</div>
-              <div className="jlSubtitle">DRAW 4, PICK 2</div>
-            </div>
-          </div>
-          <div className="jlGrid tentacles">
-            {Array.from({ length: 4 }).map((_, i) => (
-              <button key={`tent-15-${i}`} className="jlTile tentacles" disabled>
-                15 mi
-              </button>
-            ))}
-            {Array.from({ length: 4 }).map((_, i) => (
-              <button key={`tent-1-${i}`} className="jlTile tentacles" disabled>
-                1 mi
-              </button>
-            ))}
-          </div>
-
-          {/* POI (below Tentacles) */}
-          <div className="jlCategoryHeader" style={{ marginTop: "20px" }}>
-            <div className="jlIcon poi"></div>
-            <div>
-              <div className="jlTitle">POI</div>
-              <div className="jlSubtitle">DATA</div>
-            </div>
-          </div>
-          <div className="jlGrid poi">
-            {POI_KINDS.slice(0, 8).map(({ kind, label }) => (
               <button
-                key={kind}
-                className="jlTile poi"
-                onClick={() => handlePoiClick(kind, label)}
-                disabled={!candidate}
+                className="jlTile thermo"
+                onClick={() => applyThermo(true)}
+                disabled={!candidate || !thermoStart || !thermoEnd}
               >
-                {label}
+                Hotter
               </button>
-            ))}
+              <button
+                className="jlTile thermo"
+                onClick={() => applyThermo(false)}
+                disabled={!candidate || !thermoStart || !thermoEnd}
+              >
+                Colder
+              </button>
+            </div>
           </div>
-        </div>
+
+          <div className="jlCategory" style={{ marginTop: "24px" }}>
+            <div className="jlCatHeader">
+              <div className="jlCatIcon tentacles"></div>
+              <div className="jlCatTitles">
+                <div className="jlCatTitle">TENTACLES</div>
+                <div className="jlCatSub">DRAW 4, PICK 2</div>
+              </div>
+            </div>
+            <div className="jlGrid tentacles">
+              {Array.from({ length: 4 }).map((_, i) => (
+                <button key={`tent-15-${i}`} className="jlTile tentacles disabled" disabled>
+                  15 mi
+                </button>
+              ))}
+              {Array.from({ length: 4 }).map((_, i) => (
+                <button key={`tent-1-${i}`} className="jlTile tentacles disabled" disabled>
+                  1 mi
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div className="jlCategory" style={{ marginTop: "24px" }}>
+            <div className="jlCatHeader">
+              <div className="jlCatIcon poi"></div>
+              <div className="jlCatTitles">
+                <div className="jlCatTitle">POI</div>
+                <div className="jlCatSub">DATA</div>
+              </div>
+            </div>
+            <div className="jlGrid poi">
+              {POI_KINDS.slice(0, 8).map(({ kind, label }) => (
+                <button
+                  key={kind}
+                  className="jlTile poi"
+                  onClick={() => handlePoiClick(kind, label)}
+                  disabled={!candidate}
+                >
+                  {label}
+                </button>
+              ))}
+            </div>
+          </div>
+        </section>
 
         {/* PHOTO */}
-        <div className="jlCategory">
-          <div className="jlCategoryHeader">
-            <div className="jlIcon photo"></div>
-            <div>
-              <div className="jlTitle">PHOTO</div>
-              <div className="jlSubtitle">DRAW 1</div>
+        <section className="jlCol">
+          <div className="jlCategory">
+            <div className="jlCatHeader">
+              <div className="jlCatIcon photo"></div>
+              <div className="jlCatTitles">
+                <div className="jlCatTitle">PHOTO</div>
+                <div className="jlCatSub">DRAW 1</div>
+              </div>
+            </div>
+            <div className="jlGrid photo">
+              {Array.from({ length: 5 }).map((_, i) => (
+                <button key={i} className="jlTile photo disabled" disabled>
+                  {/* Placeholder */}
+                </button>
+              ))}
             </div>
           </div>
-          <div className="jlGrid photo">
-            {Array.from({ length: 5 }).map((_, i) => (
-              <button key={i} className="jlTile photo" disabled>
-                {/* Placeholder tiles */}
-              </button>
-            ))}
-          </div>
-        </div>
+        </section>
       </div>
 
       {/* POI Modal */}
