@@ -117,7 +117,7 @@ function normalizeOverpassResult(data: any): Array<{ id: number; lat: number; lo
         id: elem.id,
         lat,
         lon,
-        name: elem.tags?.name || elem.tags?."name:en" || undefined
+        name: elem.tags?.name || elem.tags?.["name:en"] || undefined
       });
     }
   }
