@@ -108,6 +108,22 @@ function PoiModal({ kind, label, onClose, onAnswer }: PoiModalProps) {
 
 // Radar radii - showing all available options
 const RADII = [0.5, 1, 3, 5, 10, 25, 50, 100];
+const RADAR_HIT = RADII.slice(0, 4);
+const RADAR_MISS = RADII.slice(4);
+
+const MATCHING_LABELS = [
+  "Airport", "Train", "Metro", "Highway",
+  "Landmass", "Mountain", "Park", "Coast",
+  "Hospital", "Library", "Museum", "Government",
+  "Stadium", "Castle", "University", "Other"
+];
+
+const MEASURING_LABELS = [
+  "Airport", "Train", "Metro", "Highway", "Border",
+  "Coast", "Park", "Mountain", "Zoo", "Museum",
+  "Hospital", "Library", "University", "School", "Police",
+  "Fire Station", "Stadium", "Castle", "Peak", "Ferry"
+];
 
 // POI kinds for the menu
 const POI_KINDS: Array<{ kind: PoiKind; label: string }> = [
@@ -172,9 +188,9 @@ export default function JetLagMenu() {
               </div>
             </div>
             <div className="jlGrid matching">
-              {Array.from({ length: 16 }).map((_, i) => (
+              {MATCHING_LABELS.map((label, i) => (
                 <button key={i} className="jlTile matching disabled" disabled>
-                  {/* Placeholder */}
+                  {label}
                 </button>
               ))}
             </div>
@@ -192,9 +208,9 @@ export default function JetLagMenu() {
               </div>
             </div>
             <div className="jlGrid measuring">
-              {Array.from({ length: 20 }).map((_, i) => (
+              {MEASURING_LABELS.map((label, i) => (
                 <button key={i} className="jlTile measuring disabled" disabled>
-                  {/* Placeholder */}
+                  {label}
                 </button>
               ))}
             </div>
@@ -211,8 +227,14 @@ export default function JetLagMenu() {
                 <div className="jlCatSub">DRAW 2, PICK 1</div>
               </div>
             </div>
+            {!seeker && (
+              <div style={{ fontSize: "11px", color: "#d32f2f", fontWeight: 600, marginTop: "4px" }}>
+                Requires seeker GPS
+              </div>
+            )}
+            <div className="section-label" style={{ marginTop: "8px", fontSize: "10px", opacity: 0.7 }}>HIT</div>
             <div className="jlGrid radar">
-              {RADII.map((r) => (
+              {RADAR_HIT.map((r) => (
                 <button
                   key={`hit-${r}`}
                   className="jlTile radar"
@@ -224,7 +246,11 @@ export default function JetLagMenu() {
                   <span>{r} mi</span>
                 </button>
               ))}
-              {RADII.map((r) => (
+            </div>
+
+            <div className="section-label" style={{ marginTop: "14px", fontSize: "10px", opacity: 0.7 }}>MISS</div>
+            <div className="jlGrid radar">
+              {RADAR_MISS.map((r) => (
                 <button
                   key={`miss-${r}`}
                   className="jlTile radar"
@@ -240,7 +266,7 @@ export default function JetLagMenu() {
           </div>
         </section>
 
-        {/* THERMOMETER / TENTACLES / POI */}
+        {/* THERMOMETER / TENTACLES (includes POI data) */}
         <section className="jlCol">
           <div className="jlCategory">
             <div className="jlCatHeader">
@@ -304,18 +330,10 @@ export default function JetLagMenu() {
                 </button>
               ))}
             </div>
-          </div>
 
-          <div className="jlCategory" style={{ marginTop: "24px" }}>
-            <div className="jlCatHeader">
-              <div className="jlCatIcon poi">{Icons.Poi}</div>
-              <div className="jlCatTitles">
-                <div className="jlCatTitle">POI</div>
-                <div className="jlCatSub">DATA</div>
-              </div>
-            </div>
+            <div className="section-label" style={{ marginTop: "16px", fontSize: "10px", opacity: 0.7 }}>PLACES (OSM)</div>
             <div className="jlGrid poi">
-              {POI_KINDS.slice(0, 8).map(({ kind, label }) => (
+              {POI_KINDS.map(({ kind, label }) => (
                 <button
                   key={kind}
                   className="jlTile poi"
@@ -323,26 +341,6 @@ export default function JetLagMenu() {
                   disabled={!candidate}
                 >
                   {label}
-                </button>
-              ))}
-            </div>
-          </div>
-        </section>
-
-        {/* PHOTO */}
-        <section className="jlCol">
-          <div className="jlCategory">
-            <div className="jlCatHeader">
-              <div className="jlCatIcon photo">{Icons.Photo}</div>
-              <div className="jlCatTitles">
-                <div className="jlCatTitle">PHOTO</div>
-                <div className="jlCatSub">DRAW 1</div>
-              </div>
-            </div>
-            <div className="jlGrid photo">
-              {Array.from({ length: 5 }).map((_, i) => (
-                <button key={i} className="jlTile photo disabled" disabled>
-                  {/* Placeholder */}
                 </button>
               ))}
             </div>
