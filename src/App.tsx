@@ -4,6 +4,7 @@ import MapView from "./map/MapView";
 import Controls from "./ui/Controls";
 import History from "./ui/History";
 import QuickSearch from "./ui/QuickSearch";
+import JetLagMenu from "./ui/JetLagMenu";
 
 export default function App() {
   const [quickSearchOpen, setQuickSearchOpen] = useState(false);
@@ -58,10 +59,6 @@ export default function App() {
   return (
     <div className="app">
       <aside className="sidebar">
-        <div className="header-band">
-          <div className="brand">MorLag</div>
-          QUESTION MENU
-        </div>
         {lastToast && (
           <div className="toast-message">
             {lastToast}
@@ -69,6 +66,7 @@ export default function App() {
         )}
         <div className="sidebarInner">
           <Controls />
+          <JetLagMenu />
           <History />
         </div>
       </aside>
