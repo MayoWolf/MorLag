@@ -54,15 +54,17 @@ export const OSM_KIND_CLAUSES: Record<OsmKind, OverpassClause[]> = {
   // Embassy: handled specially (two tags), but keep a default
   embassy: [{ key: "embassy", value: "yes" }],
 
-  // Park best-effort: leisure=park; national parks are separate kind
-  park: [{ key: "leisure", value: "park" }],
+  // Park: leisure=park OR boundary=national_park
+  park: [{ key: "leisure", value: "park" }, { key: "boundary", value: "national_park" }],
+  // Keep for compatibility (same as park's second clause)
   park_national: [{ key: "boundary", value: "national_park" }],
 
   stadium: [{ key: "leisure", value: "stadium" }],
   themepark: [{ key: "tourism", value: "theme_park" }],
 
-  // Castle: historic=castle; forts are separate kind
-  castle: [{ key: "historic", value: "castle" }],
+  // Castle: historic=castle OR historic=fort
+  castle: [{ key: "historic", value: "castle" }, { key: "historic", value: "fort" }],
+  // Keep for compatibility
   castle_fort: [{ key: "historic", value: "fort" }],
 
   peak: [{ key: "natural", value: "peak" }],
@@ -93,11 +95,8 @@ export const OSM_KIND_CLAUSES: Record<OsmKind, OverpassClause[]> = {
   // Alternative naming for fire station
   fire_station: [{ key: "amenity", value: "fire_station" }],
 
-  // Highway access best-effort: motorway junctions first; if sparse, add motorway links too
-  highway_access: [
-    { key: "highway", value: "motorway_junction" },
-    { key: "highway", value: "motorway_link" }
-  ]
+  // Highway access: motorway junctions
+  highway_access: [{ key: "highway", value: "motorway_junction" }]
 };
 
 export function isOsmKind(x: string): x is OsmKind {

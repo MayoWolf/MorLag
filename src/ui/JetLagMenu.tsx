@@ -37,11 +37,6 @@ const Icons = {
       <path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z" />
     </svg>
   ),
-  Photo: (
-    <svg viewBox="0 0 24 24" fill="currentColor" width="20" height="20">
-      <path d="M21 6h-3.17L16 4h-6v2h5.12l1.83 2H21v12H5V8h2V6H5c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2zm-8 13c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5z" />
-    </svg>
-  ),
 };
 
 // Import PoiModal component logic
@@ -144,11 +139,6 @@ const TENTACLE_LABELS = [
   { label: "Transit", dist: "1 mi" }
 ];
 
-const PHOTO_LABELS = [
-  "Building from Stn", "Widest Street", "Tree", "Selfie",
-  "Tallest Structure", "Sky", "Transit Entrance"
-];
-
 // POI kinds for the menu
 const POI_KINDS: Array<{ kind: PoiKind; label: string }> = [
   { kind: "zoo", label: "Zoo" },
@@ -189,6 +179,7 @@ export default function JetLagMenu() {
   const [poiModalLabel, setPoiModalLabel] = useState<string>("");
   const [matchingSelected, setMatchingSelected] = useState<OsmKind | null>(null);
   const [measuringSelected, setMeasuringSelected] = useState<OsmKind | null>(null);
+  const [measuringLastAnswer, setMeasuringLastAnswer] = useState<"CLOSER" | "FARTHER">("CLOSER");
 
   const handlePoiClick = (kind: PoiKind, label: string) => {
     setPoiModalKind(kind);
@@ -280,7 +271,10 @@ export default function JetLagMenu() {
                   key={t.kind}
                   className="jlTile measuring"
                   disabled={!candidate || !seeker}
-                  onClick={() => setMeasuringSelected(t.kind)}
+                  onClick={() => {
+                    setMeasuringSelected(t.kind);
+                    applyMeasuring(t.kind, measuringLastAnswer);
+                  }}
                   type="button"
                 >
                   {t.label}
@@ -292,7 +286,10 @@ export default function JetLagMenu() {
                 <button
                   type="button"
                   className="tileBtn"
-                  onClick={() => applyMeasuring(measuringSelected, "CLOSER")}
+                  onClick={() => {
+                    setMeasuringLastAnswer("CLOSER");
+                    applyMeasuring(measuringSelected, "CLOSER");
+                  }}
                   disabled={!candidate || !seeker}
                 >
                   CLOSER
@@ -300,7 +297,10 @@ export default function JetLagMenu() {
                 <button
                   type="button"
                   className="tileBtn"
-                  onClick={() => applyMeasuring(measuringSelected, "FARTHER")}
+                  onClick={() => {
+                    setMeasuringLastAnswer("FARTHER");
+                    applyMeasuring(measuringSelected, "FARTHER");
+                  }}
                   disabled={!candidate || !seeker}
                 >
                   FARTHER
@@ -447,25 +447,6 @@ export default function JetLagMenu() {
           </div>
         </section>
 
-        {/* PHOTO */}
-        <section className="jlCol">
-          <div className="jlCategory">
-            <div className="jlCatHeader">
-              <div className="jlCatIcon photo">{Icons.Photo}</div>
-              <div className="jlCatTitles">
-                <div className="jlCatTitle">PHOTO</div>
-                <div className="jlCatSub">DRAW 1</div>
-              </div>
-            </div>
-            <div className="jlGrid photo">
-              {PHOTO_LABELS.map((label, i) => (
-                <button key={i} className="jlTile photo disabled" disabled>
-                  {label}
-                </button>
-              ))}
-            </div>
-          </div>
-        </section>
       </div>
 
       {/* POI Modal */}
