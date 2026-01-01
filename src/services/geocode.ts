@@ -53,7 +53,9 @@ export async function geocode(q: string): Promise<SearchResult[]> {
   
   if (!response.ok) {
     const errorData = await response.json().catch(() => ({}));
-    throw new Error(errorData.error || `Geocoding failed: ${response.statusText}`);
+    const provider = errorData.provider ? ` (${errorData.provider})` : "";
+    const errorMsg = errorData.error || response.statusText || "Unknown error";
+    throw new Error(`Geocoding failed${provider}: ${response.status} ${errorMsg}`);
   }
 
   const data = await response.json();
