@@ -102,10 +102,16 @@ function PoiModal({ kind, label, onClose, onAnswer }: PoiModalProps) {
   );
 }
 
-// Radar radii - showing all available options
-const RADII = [0.5, 1, 3, 5, 10, 25, 50, 100];
-const RADAR_HIT = RADII.slice(0, 4);
-const RADAR_MISS = RADII.slice(4);
+const RADAR_DISTANCES: Array<{ miles: number; label: string }> = [
+  { miles: 0.5, label: "0.5 MI" },
+  { miles: 1, label: "1 MI" },
+  { miles: 3, label: "3 MI" },
+  { miles: 5, label: "5 MI" },
+  { miles: 10, label: "10 MI" },
+  { miles: 25, label: "25 MI" },
+  { miles: 50, label: "50 MI" },
+  { miles: 100, label: "100 MI" }
+];
 
 const MATCHING_TILES: Array<{ label: string; kind: OsmKind }> = [
   { label: "Airport", kind: "airport" },
@@ -180,6 +186,8 @@ export default function JetLagMenu() {
   const [matchingSelected, setMatchingSelected] = useState<OsmKind | null>(null);
   const [measuringSelected, setMeasuringSelected] = useState<OsmKind | null>(null);
   const [measuringLastAnswer, setMeasuringLastAnswer] = useState<"CLOSER" | "FARTHER">("CLOSER");
+  const [radarCustomMode, setRadarCustomMode] = useState<"HIT" | "MISS" | null>(null);
+  const [radarCustomMiles, setRadarCustomMiles] = useState<string>("");
 
   const handlePoiClick = (kind: PoiKind, label: string) => {
     setPoiModalKind(kind);
@@ -330,43 +338,99 @@ export default function JetLagMenu() {
             )}
             <div className="section-label" style={{ marginTop: "8px", fontSize: "10px", opacity: 0.7 }}>HIT</div>
             <div className="jlGrid radar">
-              {RADAR_HIT.map((r) => (
+              {RADAR_DISTANCES.map((d) => (
                 <button
-                  key={`hit-${r}`}
+                  key={`hit-${d.miles}`}
                   className="jlTile radar"
-                  onClick={() => applyRadar(r, true)}
+                  onClick={() => applyRadar(d.miles, true)}
                   disabled={!seeker || !candidate}
                   style={{ flexDirection: "column", gap: 2, lineHeight: 1 }}
                 >
                   <span style={{ fontSize: 10, opacity: 0.8 }}>HIT</span>
-                  <span>{r} mi</span>
+                  <span>{d.label}</span>
                 </button>
               ))}
+              <button
+                className="jlTile radar"
+                onClick={() => setRadarCustomMode("HIT")}
+                disabled={!seeker || !candidate}
+                style={{ flexDirection: "column", gap: 2, lineHeight: 1 }}
+                type="button"
+              >
+                <span style={{ fontSize: 10, opacity: 0.8 }}>HIT</span>
+                <span>CUSTOM</span>
+              </button>
             </div>
 
             <div className="section-label" style={{ marginTop: "14px", fontSize: "10px", opacity: 0.7 }}>MISS</div>
             <div className="jlGrid radar">
-              {RADAR_MISS.map((r) => (
+              {RADAR_DISTANCES.map((d) => (
                 <button
-                  key={`miss-${r}`}
+                  key={`miss-${d.miles}`}
                   className="jlTile radar"
-                  onClick={() => applyRadar(r, false)}
+                  onClick={() => applyRadar(d.miles, false)}
                   disabled={!seeker || !candidate}
                   style={{ flexDirection: "column", gap: 2, lineHeight: 1 }}
                 >
                   <span style={{ fontSize: 10, opacity: 0.8 }}>MISS</span>
-                  <span>{r} mi</span>
+                  <span>{d.label}</span>
                 </button>
               ))}
               <button
-                className="jlTile radar disabled"
-                disabled
+                className="jlTile radar"
+                onClick={() => setRadarCustomMode("MISS")}
+                disabled={!seeker || !candidate}
                 style={{ flexDirection: "column", gap: 2, lineHeight: 1 }}
+                type="button"
               >
-                <span style={{ fontSize: 10, opacity: 0.8 }}>???</span>
+                <span style={{ fontSize: 10, opacity: 0.8 }}>MISS</span>
                 <span>CUSTOM</span>
               </button>
             </div>
+
+            {radarCustomMode && (
+              <div style={{ marginTop: 10, display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center" }}>
+                <div style={{ fontSize: 12, fontWeight: 800 }}>
+                  Custom {radarCustomMode.toLowerCase()} (miles):
+                </div>
+                <input
+                  value={radarCustomMiles}
+                  onChange={(e) => setRadarCustomMiles(e.target.value)}
+                  inputMode="decimal"
+                  placeholder="e.g. 7.5"
+                  style={{
+                    width: 110,
+                    padding: "10px 10px",
+                    borderRadius: 10,
+                    border: "1px solid rgba(0,0,0,.2)"
+                  }}
+                />
+                <button
+                  type="button"
+                  className="tileBtn"
+                  onClick={() => {
+                    const miles = Number(radarCustomMiles);
+                    if (!Number.isFinite(miles) || miles <= 0) return;
+                    applyRadar(miles, radarCustomMode === "HIT");
+                    setRadarCustomMode(null);
+                    setRadarCustomMiles("");
+                  }}
+                  disabled={!seeker || !candidate}
+                >
+                  Apply
+                </button>
+                <button
+                  type="button"
+                  className="tileBtn"
+                  onClick={() => {
+                    setRadarCustomMode(null);
+                    setRadarCustomMiles("");
+                  }}
+                >
+                  Cancel
+                </button>
+              </div>
+            )}
           </div>
         </section>
 

@@ -783,7 +783,7 @@ code {
 .jlGrid { display:grid; gap:10px; }
 .jlGrid.matching { grid-template-columns: repeat(4, minmax(0, 1fr)); }
 .jlGrid.measuring { grid-template-columns: repeat(5, minmax(0, 1fr)); }
-.jlGrid.radar { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.jlGrid.radar { grid-template-columns: repeat(4, minmax(0, 1fr)); }
 .jlGrid.tentacles { grid-template-columns: repeat(4, minmax(0, 1fr)); }
 .jlGrid.poi { grid-template-columns: repeat(4, minmax(0, 1fr)); }
 @media (max-width: 420px){
