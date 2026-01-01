@@ -1,10 +1,13 @@
 import { create } from "zustand";
 import type { Feature, FeatureCollection, Polygon, MultiPolygon } from "geojson";
+import { bbox as turfBbox } from "@turf/turf";
 
 import countriesSample from "../data/countries.sample.geojson";
 import { applyRadar } from "../geo/radar";
 import { applyThermometer } from "../geo/thermometer";
 import { geocode, normalizeGeometry, type SearchResult } from "../services/geocode";
+import { fetchPois, type PoiKind } from "../services/overpass";
+import { expandBbox, buildBufferFromPoints, applyPoiWithin } from "../geo/poiWithin";
 
 type AnyPoly = Polygon | MultiPolygon;
 
@@ -40,6 +43,15 @@ type HistoryItem =
       ts: number;
       type: "SET_AREA";
       label: string;
+    }
+  | {
+      id: string;
+      ts: number;
+      type: "POI_WITHIN";
+      kind: string;
+      radiusMiles: number;
+      answer: "YES" | "NO";
+      poiCount: number;
     };
 
 function uid() {
@@ -77,6 +89,7 @@ type MorLagState = {
   searchQuery: string;
   searchResults: SearchResult[];
   selectedAreaLabel: string | null;
+  lastToast: string | null;
 
   setCountry: (isoA2: string) => void;
   updateSeekerFromGPS: () => Promise<void>;
@@ -96,6 +109,8 @@ type MorLagState = {
   setSearchQuery: (q: string) => void;
   runSearch: () => Promise<void>;
   selectSearchResult: (result: SearchResult) => void;
+  applyPoiWithin: (kind: PoiKind, radiusMiles: number, answer: "YES" | "NO") => Promise<void>;
+  setLastToast: (toast: string | null) => void;
 };
 
 export const useStore = create<MorLagState>((set, get) => {
@@ -122,6 +137,7 @@ export const useStore = create<MorLagState>((set, get) => {
     searchQuery: "",
     searchResults: [],
     selectedAreaLabel: null,
+    lastToast: null,
 
     setCountry: (isoA2: string) => {
       const f = findCountry(get().countries, isoA2);
@@ -314,6 +330,10 @@ export const useStore = create<MorLagState>((set, get) => {
       set({ searchQuery: q });
     },
 
+    setLastToast: (toast: string | null) => {
+      set({ lastToast: toast });
+    },
+
     runSearch: async () => {
       const query = get().searchQuery.trim();
       if (!query) {
@@ -346,6 +366,92 @@ export const useStore = create<MorLagState>((set, get) => {
           { id: uid(), ts: Date.now(), type: "SET_AREA", label: result.display_name }
         ]
       });
+    },
+
+    applyPoiWithin: async (kind: PoiKind, radiusMiles: number, answer: "YES" | "NO") => {
+      const candidate = get().candidate;
+      if (!candidate) {
+        set({ lastToast: "No area selected. Select an area first." });
+        return;
+      }
+
+      // Convert miles to km
+      const radiusKm = radiusMiles * 1.60934;
+
+      try {
+        // Compute candidate bbox and expand by radius
+        const candidateFeature: Feature<AnyPoly> = {
+          type: "Feature",
+          geometry: candidate,
+          properties: {}
+        };
+        const bbox = turfBbox(candidateFeature) as [number, number, number, number]; // [minLon, minLat, maxLon, maxLat]
+        const expandedBbox = expandBbox([bbox[1], bbox[0], bbox[3], bbox[2]], radiusKm); // Convert to [south, west, north, east]
+
+        // Fetch POIs
+        const points = await fetchPois(kind, expandedBbox);
+
+        if (points.length === 0) {
+          if (answer === "YES") {
+            // YES but no POIs found = impossible
+            set({
+              candidate: null,
+              lastToast: `No ${kind}s found. YES makes area impossible.`,
+              undoStack: [...get().undoStack, candidate],
+              redoStack: [],
+              history: [
+                ...get().history,
+                { id: uid(), ts: Date.now(), type: "POI_WITHIN", kind, radiusMiles, answer, poiCount: 0 }
+              ]
+            });
+          } else {
+            // NO and no POIs = no change
+            set({
+              lastToast: `No ${kind}s found. Area unchanged.`,
+              history: [
+                ...get().history,
+                { id: uid(), ts: Date.now(), type: "POI_WITHIN", kind, radiusMiles, answer, poiCount: 0 }
+              ]
+            });
+          }
+          return;
+        }
+
+        // Build buffer from points
+        const bufferFeature = buildBufferFromPoints(points, radiusKm);
+
+        // Apply constraint
+        const next = applyPoiWithin(candidateFeature, bufferFeature, answer === "YES");
+
+        if (!next) {
+          set({
+            candidate: null,
+            lastToast: "No possible area remains.",
+            undoStack: [...get().undoStack, candidate],
+            redoStack: [],
+            history: [
+              ...get().history,
+              { id: uid(), ts: Date.now(), type: "POI_WITHIN", kind, radiusMiles, answer, poiCount: points.length }
+            ]
+          });
+        } else {
+          set({
+            candidate: next.geometry,
+            lastToast: `${kind}: ${points.length} found in search area`,
+            undoStack: [...get().undoStack, candidate],
+            redoStack: [],
+            history: [
+              ...get().history,
+              { id: uid(), ts: Date.now(), type: "POI_WITHIN", kind, radiusMiles, answer, poiCount: points.length }
+            ]
+          });
+        }
+      } catch (error) {
+        console.error("POI within error:", error);
+        set({
+          lastToast: error instanceof Error ? error.message : "POI operation failed"
+        });
+      }
     }
   };
 });

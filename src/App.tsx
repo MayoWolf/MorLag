@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import { useStore } from "./state/store";
 import MapView from "./map/MapView";
 import Controls from "./ui/Controls";
 import History from "./ui/History";
@@ -7,6 +8,8 @@ import QuickSearch from "./ui/QuickSearch";
 export default function App() {
   const [quickSearchOpen, setQuickSearchOpen] = useState(false);
   const [initialQuery, setInitialQuery] = useState("");
+  const lastToast = useStore(s => s.lastToast);
+  const setLastToast = useStore(s => s.setLastToast);
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -42,6 +45,16 @@ export default function App() {
     };
   }, []);
 
+  // Auto-clear toast after 3 seconds
+  useEffect(() => {
+    if (lastToast) {
+      const timer = setTimeout(() => {
+        setLastToast(null);
+      }, 3000);
+      return () => clearTimeout(timer);
+    }
+  }, [lastToast, setLastToast]);
+
   return (
     <div className="app">
       <aside className="sidebar">
@@ -49,6 +62,11 @@ export default function App() {
           <div className="brand">MorLag</div>
           QUESTION MENU
         </div>
+        {lastToast && (
+          <div className="toast-message">
+            {lastToast}
+          </div>
+        )}
         <div className="content-area">
           <Controls />
           <History />

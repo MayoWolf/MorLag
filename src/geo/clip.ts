@@ -25,6 +25,11 @@ export function difference(a: AnyPoly, b: AnyPoly): AnyPoly | null {
   return fromPC(out);
 }
 
+export function union(a: AnyPoly, b: AnyPoly): AnyPoly | null {
+  const out = polygonClipping.union(toPC(a), toPC(b));
+  return fromPC(out);
+}
+
 export function bboxPolygonFor(geom: AnyPoly, pad = 0.5): Feature<Polygon> {
   const bb = bbox(geom as any) as BBox;
   const padded: BBox = [bb[0] - pad, bb[1] - pad, bb[2] + pad, bb[3] + pad];

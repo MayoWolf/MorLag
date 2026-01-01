@@ -34,6 +34,16 @@ export default function History() {
               </div>
             );
           }
+          if (h.type === "POI_WITHIN") {
+            return (
+              <div key={h.id} className="history-item">
+                <div className="history-timestamp">{fmt(h.ts)}</div>
+                <div className="history-action">
+                  <span className="history-action-label">POI:</span> {h.kind} {h.radiusMiles} mi {h.answer} ({h.poiCount} found)
+                </div>
+              </div>
+            );
+          }
           if (h.type === "RADAR") {
             return (
               <div key={h.id} className="history-item">

@@ -1,5 +1,6 @@
-import React from "react";
+import React, { useEffect } from "react";
 import { useStore } from "../state/store";
+import PoiMenu from "./PoiMenu";
 
 const RADII = [0.5, 1, 3, 5, 10, 25, 50, 100];
 
