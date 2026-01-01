@@ -4,6 +4,7 @@ import type { Feature, FeatureCollection, Polygon, MultiPolygon } from "geojson"
 import countriesSample from "../data/countries.sample.geojson";
 import { applyRadar } from "../geo/radar";
 import { applyThermometer } from "../geo/thermometer";
+import { geocode, normalizeGeometry, type SearchResult } from "../services/geocode";
 
 type AnyPoly = Polygon | MultiPolygon;
 
@@ -33,6 +34,12 @@ type HistoryItem =
       type: "SET_COUNTRY";
       isoA2: string;
       name?: string;
+    }
+  | {
+      id: string;
+      ts: number;
+      type: "SET_AREA";
+      label: string;
     };
 
 function uid() {
@@ -64,6 +71,10 @@ type MorLagState = {
   undoStack: AnyPoly[];
   redoStack: AnyPoly[];
 
+  searchQuery: string;
+  searchResults: SearchResult[];
+  selectedAreaLabel: string | null;
+
   setCountry: (isoA2: string) => void;
   updateSeekerFromGPS: () => Promise<void>;
 
@@ -76,6 +87,10 @@ type MorLagState = {
   undo: () => void;
   redo: () => void;
   resetCandidateToCountry: () => void;
+
+  setSearchQuery: (q: string) => void;
+  runSearch: () => Promise<void>;
+  selectSearchResult: (result: SearchResult) => void;
 };
 
 export const useStore = create<MorLagState>((set, get) => {
@@ -103,6 +118,10 @@ export const useStore = create<MorLagState>((set, get) => {
     history: initialHistory,
     undoStack: [],
     redoStack: [],
+
+    searchQuery: "",
+    searchResults: [],
+    selectedAreaLabel: null,
 
     setCountry: (isoA2: string) => {
       const f = findCountry(get().countries, isoA2);
@@ -228,6 +247,44 @@ export const useStore = create<MorLagState>((set, get) => {
         redoStack: [],
         thermoStart: null,
         thermoEnd: null
+      });
+    },
+
+    setSearchQuery: (q: string) => {
+      set({ searchQuery: q });
+    },
+
+    runSearch: async () => {
+      const query = get().searchQuery.trim();
+      if (!query) {
+        set({ searchResults: [] });
+        return;
+      }
+
+      try {
+        const results = await geocode(query);
+        set({ searchResults: results });
+      } catch (error) {
+        console.error("Search error:", error);
+        set({ searchResults: [] });
+        throw error;
+      }
+    },
+
+    selectSearchResult: (result: SearchResult) => {
+      const geometry = normalizeGeometry(result);
+      
+      set({
+        candidate: geometry,
+        undoStack: [],
+        redoStack: [],
+        thermoStart: null,
+        thermoEnd: null,
+        selectedAreaLabel: result.display_name,
+        history: [
+          ...get().history,
+          { id: uid(), ts: Date.now(), type: "SET_AREA", label: result.display_name }
+        ]
       });
     }
   };

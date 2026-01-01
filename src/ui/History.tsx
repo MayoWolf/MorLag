@@ -23,6 +23,14 @@ export default function History() {
               </div>
             );
           }
+          if (h.type === "SET_AREA") {
+            return (
+              <div key={h.id}>
+                <small className="muted">{fmt(h.ts)}</small>
+                <div>Area: {h.label}</div>
+              </div>
+            );
+          }
           if (h.type === "RADAR") {
             return (
               <div key={h.id}>

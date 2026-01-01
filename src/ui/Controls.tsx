@@ -24,8 +24,87 @@ export default function Controls() {
   const redo = useStore(s => s.redo);
   const reset = useStore(s => s.resetCandidateToCountry);
 
+  const searchQuery = useStore(s => s.searchQuery);
+  const searchResults = useStore(s => s.searchResults);
+  const setSearchQuery = useStore(s => s.setSearchQuery);
+  const runSearch = useStore(s => s.runSearch);
+  const selectSearchResult = useStore(s => s.selectSearchResult);
+
+  const handleSearch = async () => {
+    try {
+      await runSearch();
+    } catch (err) {
+      alert(String(err instanceof Error ? err.message : err));
+    }
+  };
+
+  const truncateName = (name: string, maxLength: number = 50) => {
+    if (name.length <= maxLength) return name;
+    return name.slice(0, maxLength - 3) + "...";
+  };
+
   return (
     <>
+      <div className="card">
+        <div className="row">
+          <strong>Search area</strong>
+        </div>
+        <div className="row">
+          <input
+            type="text"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") {
+                handleSearch();
+              }
+            }}
+            placeholder="e.g., Los Angeles, California, Europe"
+            style={{ flex: 1, marginRight: "8px", padding: "6px" }}
+          />
+          <button onClick={handleSearch}>Search</button>
+        </div>
+        {searchResults.length > 0 && (
+          <div className="row" style={{ marginTop: "8px", maxHeight: "200px", overflowY: "auto" }}>
+            <div style={{ width: "100%" }}>
+              {searchResults.map((result, idx) => (
+                <div
+                  key={idx}
+                  onClick={() => selectSearchResult(result)}
+                  style={{
+                    padding: "8px",
+                    marginBottom: "4px",
+                    border: "1px solid #ddd",
+                    borderRadius: "4px",
+                    cursor: "pointer",
+                    backgroundColor: "#f9f9f9"
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.backgroundColor = "#f0f0f0";
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.backgroundColor = "#f9f9f9";
+                  }}
+                >
+                  <div style={{ fontWeight: "500", marginBottom: "4px" }}>
+                    {truncateName(result.display_name)}
+                  </div>
+                  <div style={{ fontSize: "0.85em", color: "#666" }}>
+                    {result.class && result.type && `${result.class}/${result.type}`}
+                    {result.address?.country && (
+                      <span>
+                        {result.class && result.type ? " • " : ""}
+                        {result.address.country}
+                      </span>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+      </div>
+
       <div className="card">
         <div className="row">
           <strong>Country</strong>
