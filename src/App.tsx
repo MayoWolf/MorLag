@@ -6,7 +6,7 @@ import History from "./ui/History";
 export default function App() {
   return (
     <div className="app">
-      <div className="sidebar">
+      <aside className="sidebar">
         <div className="header-band">
           <div className="brand">MorLag</div>
           QUESTION MENU
@@ -15,9 +15,11 @@ export default function App() {
           <Controls />
           <History />
         </div>
-      </div>
+      </aside>
 
-      <MapView />
+      <main className="mapWrap">
+        <MapView />
+      </main>
     </div>
   );
 }

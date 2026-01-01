@@ -82,9 +82,31 @@ export default function MapView() {
           "line-color": "#000000"
         }
       });
+
+      // Resize map after load to ensure proper rendering
+      requestAnimationFrame(() => {
+        map.resize();
+      });
     });
 
+    // Resize map after mount
+    requestAnimationFrame(() => {
+      map.resize();
+    });
+
+    // Handle window resize
+    let resizeTimeout: ReturnType<typeof setTimeout> | null = null;
+    const handleResize = () => {
+      if (resizeTimeout) clearTimeout(resizeTimeout);
+      resizeTimeout = setTimeout(() => {
+        map.resize();
+      }, 100);
+    };
+    window.addEventListener("resize", handleResize);
+
     return () => {
+      window.removeEventListener("resize", handleResize);
+      if (resizeTimeout) clearTimeout(resizeTimeout);
       seekerMarkerRef.current?.remove();
       seekerMarkerRef.current = null;
       map.remove();
