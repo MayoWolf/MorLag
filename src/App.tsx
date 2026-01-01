@@ -7,10 +7,14 @@ export default function App() {
   return (
     <div className="app">
       <div className="sidebar">
-        <h1>MorLag</h1>
-
-        <Controls />
-        <History />
+        <div className="header-band">
+          <div className="brand">MorLag</div>
+          QUESTION MENU
+        </div>
+        <div className="content-area">
+          <Controls />
+          <History />
+        </div>
       </div>
 
       <MapView />

@@ -41,51 +41,36 @@ export default function Controls() {
 
   return (
     <>
-      <div className="card">
-        <div className="row">
-          <strong>Search area</strong>
-        </div>
-        <div className="row">
-          <input
-            type="text"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === "Enter") {
-                handleSearch();
-              }
-            }}
-            placeholder="e.g., Los Angeles, California, Europe"
-            style={{ flex: 1, marginRight: "8px", padding: "6px" }}
-          />
-          <button onClick={handleSearch}>Search</button>
-        </div>
-        {searchResults.length > 0 && (
-          <div className="row" style={{ marginTop: "8px", maxHeight: "200px", overflowY: "auto" }}>
-            <div style={{ width: "100%" }}>
+      {/* SEARCH AREA */}
+      <div className="panel">
+        <div className="panel-header search">SEARCH AREA</div>
+        <div className="panel-content">
+          <div className="row">
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") {
+                  handleSearch();
+                }
+              }}
+              placeholder="e.g., Los Angeles, California, Europe"
+            />
+            <button onClick={handleSearch}>Search</button>
+          </div>
+          {searchResults.length > 0 && (
+            <div className="search-results">
               {searchResults.map((result, idx) => (
                 <div
                   key={idx}
+                  className="search-result-item"
                   onClick={() => selectSearchResult(result)}
-                  style={{
-                    padding: "8px",
-                    marginBottom: "4px",
-                    border: "1px solid #ddd",
-                    borderRadius: "4px",
-                    cursor: "pointer",
-                    backgroundColor: "#f9f9f9"
-                  }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.backgroundColor = "#f0f0f0";
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.backgroundColor = "#f9f9f9";
-                  }}
                 >
-                  <div style={{ fontWeight: "500", marginBottom: "4px" }}>
+                  <div className="search-result-title">
                     {truncateName(result.display_name)}
                   </div>
-                  <div style={{ fontSize: "0.85em", color: "#666" }}>
+                  <div className="search-result-meta">
                     {result.class && result.type && `${result.class}/${result.type}`}
                     {result.address?.country && (
                       <span>
@@ -97,77 +82,111 @@ export default function Controls() {
                 </div>
               ))}
             </div>
+          )}
+        </div>
+      </div>
+
+      {/* SEEKER GPS */}
+      <div className="panel">
+        <div className="panel-header seeker">SEEKER GPS</div>
+        <div className="panel-content">
+          <div className="row">
+            <button
+              className="primary"
+              onClick={() => updateSeeker().catch(err => alert(err?.message ?? String(err)))}
+            >
+              Use GPS
+            </button>
+            <button onClick={reset}>Reset Area</button>
+            <button onClick={undo}>Undo</button>
+            <button onClick={redo}>Redo</button>
           </div>
-        )}
-      </div>
-
-      <div className="card">
-        <div className="row">
-          <strong>Seeker GPS</strong>
-        </div>
-        <div className="row">
-          <button
-            className="primary"
-            onClick={() => updateSeeker().catch(err => alert(err?.message ?? String(err)))}
-          >
-            Use GPS
-          </button>
-          <button onClick={reset}>Reset Area</button>
-          <button onClick={undo}>Undo</button>
-          <button onClick={redo}>Redo</button>
-        </div>
-        <div className="row">
-          <small className="muted">
-            {seeker ? `LngLat: ${seeker[0].toFixed(5)}, ${seeker[1].toFixed(5)}` : "No seeker position yet."}
-            {acc ? ` • ±${Math.round(acc)}m` : ""}
-          </small>
+          {seeker && (
+            <div className="coords-display">
+              {seeker[0].toFixed(5)}, {seeker[1].toFixed(5)}
+              {acc && ` • ±${Math.round(acc)}m`}
+            </div>
+          )}
         </div>
       </div>
 
-      <div className="card">
-        <strong>Radar</strong>
-        <div className="hr" />
-        <div className="row">
-          {RADII.map((r) => (
-            <button key={`hit-${r}`} onClick={() => applyRadar(r, true)} disabled={!seeker}>
-              Hit {r} mi
+      {/* RADAR */}
+      <div className="panel">
+        <div className="panel-header radar">RADAR</div>
+        <div className="panel-content">
+          <div className="section-label">Hit</div>
+          <div className="tile-grid">
+            {RADII.map((r) => (
+              <button
+                key={`hit-${r}`}
+                className="tile-button orange"
+                onClick={() => applyRadar(r, true)}
+                disabled={!seeker}
+              >
+                {r} mi
+              </button>
+            ))}
+          </div>
+          <div className="section-label" style={{ marginTop: "12px" }}>Miss</div>
+          <div className="tile-grid">
+            {RADII.map((r) => (
+              <button
+                key={`miss-${r}`}
+                className="tile-button orange"
+                onClick={() => applyRadar(r, false)}
+                disabled={!seeker}
+              >
+                {r} mi
+              </button>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      {/* THERMOMETER */}
+      <div className="panel">
+        <div className="panel-header thermometer">THERMOMETER</div>
+        <div className="panel-content">
+          <div className="tile-grid" style={{ gridTemplateColumns: "repeat(2, 1fr)" }}>
+            <button
+              className="tile-button"
+              onClick={setStart}
+              disabled={!seeker}
+            >
+              Set Start
             </button>
-          ))}
-        </div>
-        <div className="row">
-          {RADII.map((r) => (
-            <button key={`miss-${r}`} onClick={() => applyRadar(r, false)} disabled={!seeker}>
-              Miss {r} mi
+            <button
+              className="tile-button"
+              onClick={setEnd}
+              disabled={!seeker}
+            >
+              Set End
             </button>
-          ))}
+          </div>
+          {(thermoStart || thermoEnd) && (
+            <div className="coords-display" style={{ marginTop: "8px" }}>
+              {thermoStart ? `Start: ${thermoStart[0].toFixed(4)}, ${thermoStart[1].toFixed(4)}` : "Start: not set"}
+              <br />
+              {thermoEnd ? `End: ${thermoEnd[0].toFixed(4)}, ${thermoEnd[1].toFixed(4)}` : "End: not set"}
+            </div>
+          )}
+          <div className="tile-grid" style={{ gridTemplateColumns: "repeat(2, 1fr)", marginTop: "12px" }}>
+            <button
+              className="tile-button yellow large"
+              onClick={() => applyThermo(true)}
+              disabled={!thermoStart || !thermoEnd}
+            >
+              Hotter
+            </button>
+            <button
+              className="tile-button yellow large"
+              onClick={() => applyThermo(false)}
+              disabled={!thermoStart || !thermoEnd}
+            >
+              Colder
+            </button>
+          </div>
         </div>
-        <small className="muted">Requires seeker GPS.</small>
-      </div>
-
-      <div className="card">
-        <strong>Thermometer</strong>
-        <div className="hr" />
-        <div className="row">
-          <button onClick={setStart} disabled={!seeker}>Set Start</button>
-          <button onClick={setEnd} disabled={!seeker}>Set End</button>
-        </div>
-        <small className="muted">
-          Start: {thermoStart ? `${thermoStart[0].toFixed(4)}, ${thermoStart[1].toFixed(4)}` : "not set"}
-          <br />
-          End: {thermoEnd ? `${thermoEnd[0].toFixed(4)}, ${thermoEnd[1].toFixed(4)}` : "not set"}
-        </small>
-        <div className="hr" />
-        <div className="row">
-          <button className="primary" onClick={() => applyThermo(true)} disabled={!thermoStart || !thermoEnd}>
-            Hotter
-          </button>
-          <button className="primary" onClick={() => applyThermo(false)} disabled={!thermoStart || !thermoEnd}>
-            Colder
-          </button>
-        </div>
-        <small className="muted">
-          Uses a Voronoi split between Start and End, then keeps the correct half.
-        </small>
       </div>
     </>
   );

@@ -7,32 +7,119 @@ html, body, #root {
   margin: 0;
 }
 
+body {
+  background: #f3f3f3;
+}
+
 .app {
-  display: grid;
-  grid-template-columns: 360px 1fr;
+  display: flex;
+  flex-direction: column;
   height: 100%;
 }
 
+@media (min-width: 768px) {
+  .app {
+    flex-direction: row;
+  }
+}
+
 .sidebar {
-  border-right: 1px solid #ddd;
-  padding: 14px;
+  background: #f3f3f3;
   overflow: auto;
+  padding: 0;
+  width: 100%;
+}
+
+@media (min-width: 768px) {
+  .sidebar {
+    width: 340px;
+    border-right: 1px solid #ddd;
+    flex-shrink: 0;
+  }
+}
+
+.header-band {
+  background: #d32f2f;
+  color: white;
+  padding: 14px 16px;
+  text-align: center;
+  font-weight: 700;
+  font-size: 16px;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+}
+
+.brand {
+  font-size: 11px;
+  font-weight: 500;
+  opacity: 0.9;
+  letter-spacing: 0.3px;
+  margin-bottom: 4px;
+}
+
+.content-area {
+  padding: 12px;
 }
 
 .map {
   position: relative;
+  height: 45vh;
+  flex: 1;
+}
+
+@media (min-width: 768px) {
+  .map {
+    height: 100%;
+  }
 }
 
 h1 {
-  margin: 0 0 8px 0;
-  font-size: 20px;
+  margin: 0;
+  font-size: 16px;
+  font-weight: 700;
 }
 
-.card {
-  border: 1px solid #e6e6e6;
-  border-radius: 10px;
-  padding: 10px;
-  margin: 10px 0;
+.panel {
+  background: white;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  margin-bottom: 12px;
+  overflow: hidden;
+}
+
+.panel-header {
+  padding: 10px 12px;
+  font-weight: 700;
+  font-size: 13px;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+  color: white;
+}
+
+.panel-header.search {
+  background: #1976d2;
+}
+
+.panel-header.seeker {
+  background: #424242;
+}
+
+.panel-header.radar {
+  background: #f57c00;
+}
+
+.panel-header.thermometer {
+  background: #fbc02d;
+  color: #333;
+}
+
+.panel-content {
+  padding: 12px;
+  background: white;
+}
+
+.panel-content.dark-bg {
+  background: #fafafa;
 }
 
 .row {
@@ -40,39 +127,253 @@ h1 {
   gap: 8px;
   align-items: center;
   flex-wrap: wrap;
+  margin-bottom: 8px;
+}
+
+.row:last-child {
+  margin-bottom: 0;
 }
 
 button, select, input {
   font: inherit;
 }
 
-button {
+input[type="text"] {
   padding: 8px 10px;
-  border-radius: 10px;
-  border: 1px solid #ddd;
-  background: #fff;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  background: white;
+  font-size: 14px;
+  flex: 1;
+}
+
+input[type="text"]:focus {
+  outline: none;
+  border-color: #1976d2;
+}
+
+button {
+  padding: 10px 14px;
+  border-radius: 4px;
+  border: 1px solid #ccc;
+  background: white;
   cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+  transition: background-color 0.15s, border-color 0.15s;
+}
+
+button:hover:not(:disabled) {
+  background: #f5f5f5;
+  border-color: #999;
 }
 
 button.primary {
-  border-color: #111;
+  background: #1976d2;
+  color: white;
+  border-color: #1976d2;
+}
+
+button.primary:hover:not(:disabled) {
+  background: #1565c0;
+  border-color: #1565c0;
 }
 
 button:disabled {
-  opacity: 0.55;
+  opacity: 0.4;
   cursor: not-allowed;
+}
+
+.tile-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 6px;
+  margin-top: 8px;
+}
+
+@media (min-width: 768px) {
+  .tile-grid {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}
+
+.tile-button {
+  padding: 10px 8px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  background: white;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 500;
+  text-align: center;
+  transition: background-color 0.15s, border-color 0.15s;
+  min-height: 38px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.tile-button:hover:not(:disabled) {
+  background: #f5f5f5;
+  border-color: #999;
+}
+
+.tile-button:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.tile-button.orange {
+  background: #f57c00;
+  color: white;
+  border-color: #f57c00;
+}
+
+.tile-button.orange:hover:not(:disabled) {
+  background: #e65100;
+  border-color: #e65100;
+}
+
+.tile-button.yellow {
+  background: #fbc02d;
+  color: #333;
+  border-color: #fbc02d;
+}
+
+.tile-button.yellow:hover:not(:disabled) {
+  background: #f9a825;
+  border-color: #f9a825;
+}
+
+.tile-button.large {
+  padding: 14px;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.subtitle {
+  font-size: 11px;
+  color: #666;
+  margin-top: 4px;
+  font-weight: 400;
+}
+
+.section-label {
+  font-size: 11px;
+  font-weight: 600;
+  color: #666;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+  margin-bottom: 6px;
+}
+
+.search-results {
+  margin-top: 8px;
+  max-height: 200px;
+  overflow-y: auto;
+  border: 1px solid #e0e0e0;
+  border-radius: 4px;
+}
+
+.search-result-item {
+  padding: 10px 12px;
+  border-bottom: 1px solid #f0f0f0;
+  cursor: pointer;
+  transition: background-color 0.15s;
+}
+
+.search-result-item:last-child {
+  border-bottom: none;
+}
+
+.search-result-item:hover {
+  background: #f5f5f5;
+}
+
+.search-result-title {
+  font-weight: 500;
+  font-size: 14px;
+  margin-bottom: 2px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.search-result-meta {
+  font-size: 12px;
+  color: #666;
+}
+
+.coords-display {
+  font-size: 12px;
+  color: #666;
+  margin-top: 6px;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
 }
 
 small.muted {
   color: #666;
+  font-size: 11px;
 }
 
 .hr {
   height: 1px;
   background: #eee;
   margin: 10px 0;
+  border: none;
 }
 
 code {
   font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+}
+
+.history-panel {
+  background: white;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  padding: 12px;
+  margin-bottom: 12px;
+  max-height: 300px;
+  overflow-y: auto;
+}
+
+.history-panel strong {
+  display: block;
+  font-size: 13px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+  margin-bottom: 10px;
+  color: #333;
+}
+
+.history-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.history-item {
+  padding: 6px 0;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.history-item:last-child {
+  border-bottom: none;
+}
+
+.history-timestamp {
+  font-size: 10px;
+  color: #999;
+  margin-bottom: 2px;
+}
+
+.history-action {
+  font-size: 13px;
+  font-weight: 600;
+  color: #333;
+}
+
+.history-action-label {
+  font-weight: 500;
 }
