@@ -730,25 +730,55 @@ code {
 /* ============================================
    JET LAG MENU
    ============================================ */
-.jlMenu { background:#f5f5f5; border-top:1px solid rgba(0,0,0,.12); }
+.jlMenu {
+  background:#f5f5f5;
+  border-top:1px solid rgba(0,0,0,.12);
+  /* Container queries so the menu responds to its actual rendered width (sidebar vs full width) */
+  container-type: inline-size;
+}
 .jlBanner { background:#D63B35; color:#fff; font-weight:900; letter-spacing:.08em; text-align:center; padding:14px 10px; text-transform:uppercase; }
 
-.jlColumns { display:grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap:0; }
-.jlCol { padding:14px 14px 18px; border-right:1px solid rgba(0,0,0,.12); }
-.jlCol:last-child { border-right:none; }
+.jlColumns {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 18px;
+  padding: 14px;
+  align-items: start;
+}
+.jlCol {
+  min-width: 0;
+  padding: 0;
+  border-right: none;
+}
 
-@media (max-width: 900px){
-  .jlColumns { grid-template-columns: 1fr; }
-  .jlCol { border-right:none; border-bottom:1px solid rgba(0,0,0,.12); }
-  .jlCol:last-child { border-bottom:none; }
+@container (min-width: 740px){
+  .jlColumns { grid-template-columns: repeat(2, minmax(320px, 1fr)); }
+}
+@container (min-width: 1100px){
+  .jlColumns { grid-template-columns: repeat(3, minmax(320px, 1fr)); }
 }
 
 .jlCategory { display:flex; flex-direction:column; gap:10px; }
 .jlCatHeader { display:flex; align-items:center; gap:10px; }
 .jlCatIcon { width:34px; height:34px; border-radius:8px; display:flex; align-items:center; justify-content:center; color:#fff; font-weight:900; }
-.jlCatTitles { display:flex; flex-direction:column; line-height:1.05; }
-.jlCatTitle { font-weight:900; text-transform:uppercase; font-size:16px; }
-.jlCatSub { font-weight:800; text-transform:uppercase; font-size:12px; opacity:.85; }
+.jlCatTitles { display:flex; flex-direction:column; line-height:1.05; min-width: 0; }
+.jlCatTitle {
+  font-weight:900;
+  text-transform:uppercase;
+  font-size:16px;
+  white-space: normal;
+  overflow-wrap: normal;
+  word-break: normal;
+}
+.jlCatSub {
+  font-weight:800;
+  text-transform:uppercase;
+  font-size:12px;
+  opacity:.85;
+  white-space: normal;
+  overflow-wrap: normal;
+  word-break: normal;
+}
 
 .jlGrid { display:grid; gap:10px; }
 .jlGrid.matching { grid-template-columns: repeat(4, minmax(0, 1fr)); }
@@ -777,6 +807,11 @@ code {
   text-align:center;
   cursor:pointer;
   user-select:none;
+  min-width: 0;
+  /* Prevent letter-by-letter wrapping when tiles get narrow */
+  overflow-wrap: normal;
+  word-break: normal;
+  hyphens: none;
 }
 .jlTile:active { transform: scale(0.98); }
 .jlTile.disabled { opacity:.35; cursor:not-allowed; }
