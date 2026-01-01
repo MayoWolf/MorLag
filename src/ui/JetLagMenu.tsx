@@ -114,15 +114,28 @@ const RADAR_MISS = RADII.slice(4);
 const MATCHING_LABELS = [
   "Airport", "Train", "Metro", "Highway",
   "Landmass", "Mountain", "Park", "Coast",
-  "Hospital", "Library", "Museum", "Government",
-  "Stadium", "Castle", "University", "Other"
+  "Hospital", "Library", "Govt Building"
 ];
 
 const MEASURING_LABELS = [
-  "Airport", "Train", "Metro", "Highway", "Border",
-  "Coast", "Park", "Mountain", "Zoo", "Museum",
-  "Hospital", "Library", "University", "School", "Police",
-  "Fire Station", "Stadium", "Castle", "Peak", "Ferry"
+  "Airport", "Park", "Mountain", "Zoo", "Museum",
+  "Hospital", "Library", "Govt Building", "Transit Stn"
+];
+
+const TENTACLE_LABELS = [
+  { label: "Airport", dist: "15 mi" },
+  { label: "Park", dist: "15 mi" },
+  { label: "Mountain", dist: "15 mi" },
+  { label: "Transit", dist: "15 mi" },
+  { label: "Airport", dist: "1 mi" },
+  { label: "Park", dist: "1 mi" },
+  { label: "Mountain", dist: "1 mi" },
+  { label: "Transit", dist: "1 mi" }
+];
+
+const PHOTO_LABELS = [
+  "Building from Stn", "Widest Street", "Tree", "Selfie",
+  "Tallest Structure", "Sky", "Transit Entrance"
 ];
 
 // POI kinds for the menu
@@ -262,6 +275,14 @@ export default function JetLagMenu() {
                   <span>{r} mi</span>
                 </button>
               ))}
+              <button
+                className="jlTile radar disabled"
+                disabled
+                style={{ flexDirection: "column", gap: 2, lineHeight: 1 }}
+              >
+                <span style={{ fontSize: 10, opacity: 0.8 }}>???</span>
+                <span>CUSTOM</span>
+              </button>
             </div>
           </div>
         </section>
@@ -319,14 +340,10 @@ export default function JetLagMenu() {
               </div>
             </div>
             <div className="jlGrid tentacles">
-              {Array.from({ length: 4 }).map((_, i) => (
-                <button key={`tent-15-${i}`} className="jlTile tentacles disabled" disabled>
-                  15 mi
-                </button>
-              ))}
-              {Array.from({ length: 4 }).map((_, i) => (
-                <button key={`tent-1-${i}`} className="jlTile tentacles disabled" disabled>
-                  1 mi
+              {TENTACLE_LABELS.map((t, i) => (
+                <button key={i} className="jlTile tentacles disabled" disabled style={{flexDirection:"column", gap:2, lineHeight:1}}>
+                  <span>{t.label}</span>
+                  <span style={{fontSize:"10px", opacity:0.8}}>{t.dist}</span>
                 </button>
               ))}
             </div>
@@ -340,6 +357,26 @@ export default function JetLagMenu() {
                   onClick={() => handlePoiClick(kind, label)}
                   disabled={!candidate}
                 >
+                  {label}
+                </button>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        {/* PHOTO */}
+        <section className="jlCol">
+          <div className="jlCategory">
+            <div className="jlCatHeader">
+              <div className="jlCatIcon photo">{Icons.Photo}</div>
+              <div className="jlCatTitles">
+                <div className="jlCatTitle">PHOTO</div>
+                <div className="jlCatSub">DRAW 1</div>
+              </div>
+            </div>
+            <div className="jlGrid photo">
+              {PHOTO_LABELS.map((label, i) => (
+                <button key={i} className="jlTile photo disabled" disabled>
                   {label}
                 </button>
               ))}
