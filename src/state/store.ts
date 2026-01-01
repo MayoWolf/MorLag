@@ -63,6 +63,9 @@ type MorLagState = {
 
   seekerLngLat: [number, number] | null;
   seekerAccuracyM: number | null;
+  seekerLastUpdatedMs: number | null;
+  gpsWatchId: number | null;
+  isTrackingGPS: boolean;
 
   thermoStart: [number, number] | null;
   thermoEnd: [number, number] | null;
@@ -77,6 +80,8 @@ type MorLagState = {
 
   setCountry: (isoA2: string) => void;
   updateSeekerFromGPS: () => Promise<void>;
+  startGPSTracking: () => void;
+  stopGPSTracking: () => void;
 
   setThermoStartNow: () => void;
   setThermoEndNow: () => void;
@@ -103,6 +108,9 @@ export const useStore = create<MorLagState>((set, get) => {
 
     seekerLngLat: null,
     seekerAccuracyM: null,
+    seekerLastUpdatedMs: null,
+    gpsWatchId: null,
+    isTrackingGPS: false,
 
     thermoStart: null,
     thermoEnd: null,
@@ -139,19 +147,79 @@ export const useStore = create<MorLagState>((set, get) => {
       if (!navigator.geolocation) throw new Error("Geolocation not supported");
 
       const pos = await new Promise<GeolocationPosition>((resolve, reject) => {
-        navigator.geolocation.getCurrentPosition(resolve, reject, {
-          enableHighAccuracy: true,
-          timeout: 12000,
-          maximumAge: 2000
-        });
+        navigator.geolocation.getCurrentPosition(
+          resolve,
+          (err) => {
+            const codeMsg = err.code === 1 ? "PERMISSION_DENIED" : err.code === 2 ? "POSITION_UNAVAILABLE" : err.code === 3 ? "TIMEOUT" : `ERROR_${err.code}`;
+            reject(new Error(`GPS error (${codeMsg}): ${err.message || "Unknown error"}`));
+          },
+          {
+            enableHighAccuracy: true,
+            timeout: 15000,
+            maximumAge: 0
+          }
+        );
       });
 
       const lng = pos.coords.longitude;
       const lat = pos.coords.latitude;
+      const now = Date.now();
 
       set({
         seekerLngLat: [lng, lat],
-        seekerAccuracyM: pos.coords.accuracy ?? null
+        seekerAccuracyM: pos.coords.accuracy ?? null,
+        seekerLastUpdatedMs: now
+      });
+    },
+
+    startGPSTracking: () => {
+      const state = get();
+      if (state.isTrackingGPS || state.gpsWatchId !== null) {
+        return; // Already tracking
+      }
+
+      if (!navigator.geolocation) {
+        throw new Error("Geolocation not supported");
+      }
+
+      const watchId = navigator.geolocation.watchPosition(
+        (pos) => {
+          const lng = pos.coords.longitude;
+          const lat = pos.coords.latitude;
+          const now = Date.now();
+
+          set({
+            seekerLngLat: [lng, lat],
+            seekerAccuracyM: pos.coords.accuracy ?? null,
+            seekerLastUpdatedMs: now
+          });
+        },
+        (err) => {
+          console.error("GPS tracking error:", err);
+          // Stop tracking on error
+          get().stopGPSTracking();
+        },
+        {
+          enableHighAccuracy: true,
+          maximumAge: 0
+        }
+      );
+
+      set({
+        gpsWatchId: watchId,
+        isTrackingGPS: true
+      });
+    },
+
+    stopGPSTracking: () => {
+      const state = get();
+      if (state.gpsWatchId !== null) {
+        navigator.geolocation.clearWatch(state.gpsWatchId);
+      }
+
+      set({
+        gpsWatchId: null,
+        isTrackingGPS: false
       });
     },
 
@@ -231,6 +299,8 @@ export const useStore = create<MorLagState>((set, get) => {
     },
 
     resetCandidateToCountry: () => {
+      // Stop GPS tracking when resetting
+      get().stopGPSTracking();
       set({
         candidate: null,
         undoStack: [],

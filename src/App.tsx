@@ -1,9 +1,47 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import MapView from "./map/MapView";
 import Controls from "./ui/Controls";
 import History from "./ui/History";
+import QuickSearch from "./ui/QuickSearch";
 
 export default function App() {
+  const [quickSearchOpen, setQuickSearchOpen] = useState(false);
+  const [initialQuery, setInitialQuery] = useState("");
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      const target = e.target as HTMLElement;
+      const isInput = target.tagName === "INPUT" || target.tagName === "TEXTAREA" || target.tagName === "SELECT";
+      const isContentEditable = target.isContentEditable;
+
+      // Cmd+K / Ctrl+K to open quick search
+      if ((e.metaKey || e.ctrlKey) && e.key === "k") {
+        e.preventDefault();
+        setInitialQuery("");
+        setQuickSearchOpen(true);
+        return;
+      }
+
+      // Don't trigger on input/textarea/select/contenteditable
+      if (isInput || isContentEditable) {
+        return;
+      }
+
+      // Printable character (length === 1, not special keys)
+      if (e.key.length === 1 && !e.ctrlKey && !e.metaKey && !e.altKey) {
+        // Open quick search and set initial query
+        setInitialQuery(e.key);
+        setQuickSearchOpen(true);
+        e.preventDefault();
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => {
+      window.removeEventListener("keydown", handleKeyDown);
+    };
+  }, []);
+
   return (
     <div className="app">
       <aside className="sidebar">
@@ -20,6 +58,12 @@ export default function App() {
       <main className="mapWrap">
         <MapView />
       </main>
+
+      <QuickSearch
+        isOpen={quickSearchOpen}
+        onClose={() => setQuickSearchOpen(false)}
+        initialQuery={initialQuery}
+      />
     </div>
   );
 }

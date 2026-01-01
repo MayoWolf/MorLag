@@ -7,7 +7,11 @@ export default function Controls() {
   const candidate = useStore(s => s.candidate);
   const seeker = useStore(s => s.seekerLngLat);
   const acc = useStore(s => s.seekerAccuracyM);
+  const lastUpdatedMs = useStore(s => s.seekerLastUpdatedMs);
+  const isTrackingGPS = useStore(s => s.isTrackingGPS);
   const updateSeeker = useStore(s => s.updateSeekerFromGPS);
+  const startTracking = useStore(s => s.startGPSTracking);
+  const stopTracking = useStore(s => s.stopGPSTracking);
 
   const thermoStart = useStore(s => s.thermoStart);
   const thermoEnd = useStore(s => s.thermoEnd);
@@ -103,14 +107,39 @@ export default function Controls() {
             >
               Use GPS
             </button>
+            <button
+              onClick={() => {
+                if (isTrackingGPS) {
+                  stopTracking();
+                } else {
+                  try {
+                    startTracking();
+                  } catch (err) {
+                    alert(err instanceof Error ? err.message : String(err));
+                  }
+                }
+              }}
+            >
+              {isTrackingGPS ? "Stop Tracking" : "Track GPS"}
+            </button>
             <button onClick={reset}>Reset Area</button>
             <button onClick={undo}>Undo</button>
             <button onClick={redo}>Redo</button>
           </div>
-          {seeker && (
+          {seeker ? (
             <div className="coords-display">
               {seeker[0].toFixed(5)}, {seeker[1].toFixed(5)}
               {acc && ` • ±${Math.round(acc)}m`}
+              {lastUpdatedMs && (
+                <>
+                  <br />
+                  Last updated: {new Date(lastUpdatedMs).toLocaleTimeString()}
+                </>
+              )}
+            </div>
+          ) : (
+            <div className="coords-display" style={{ color: "#999", fontStyle: "italic" }}>
+              No seeker position yet.
             </div>
           )}
         </div>
