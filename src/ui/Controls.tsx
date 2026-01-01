@@ -4,10 +4,6 @@ import { useStore } from "../state/store";
 const RADII = [0.5, 1, 3, 5, 10, 25, 50, 100];
 
 export default function Controls() {
-  const countries = useStore(s => s.countries);
-  const selectedIsoA2 = useStore(s => s.selectedIsoA2);
-  const setCountry = useStore(s => s.setCountry);
-
   const seeker = useStore(s => s.seekerLngLat);
   const acc = useStore(s => s.seekerAccuracyM);
   const updateSeeker = useStore(s => s.updateSeekerFromGPS);
@@ -103,25 +99,6 @@ export default function Controls() {
             </div>
           </div>
         )}
-      </div>
-
-      <div className="card">
-        <div className="row">
-          <strong>Country</strong>
-        </div>
-        <div className="row">
-          <select value={selectedIsoA2} onChange={(e) => setCountry(e.target.value)}>
-            {countries.map((c) => {
-              const iso = (c.properties?.iso_a2 ?? "").toUpperCase();
-              const name = c.properties?.name ?? iso;
-              return (
-                <option key={iso} value={iso}>
-                  {name} ({iso})
-                </option>
-              );
-            })}
-          </select>
-        </div>
       </div>
 
       <div className="card">
