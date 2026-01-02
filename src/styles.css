@@ -1,5 +1,7 @@
 :root {
   font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial;
+  --tile-font-lg: 12px;
+  --tile-font: 11px;
 }
 
 /* ============================================
@@ -885,14 +887,19 @@ code {
   /* Font & Text */
   color:#fff;
   font-weight:800;
-  font-size: clamp(11px, 1.3vw, 13px) !important;
-  line-height: 1 !important;
+  font-size: var(--tile-font, 11px) !important;
+  line-height: 1.05 !important;
   text-transform:uppercase;
+  letter-spacing: 0.4px !important;
   
-  /* NO WRAP */
-  white-space: nowrap !important;
+  /* WRAP - up to 2 lines, word-safe */
+  white-space: normal !important;
+  word-break: keep-all !important;
+  overflow-wrap: normal !important;
   overflow: hidden !important;
-  text-overflow: ellipsis !important;
+  display: -webkit-box !important;
+  -webkit-box-orient: vertical !important;
+  -webkit-line-clamp: 2 !important;
   
   cursor:pointer;
   user-select:none;

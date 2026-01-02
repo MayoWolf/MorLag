@@ -124,8 +124,8 @@ type MatchingTile =
   | { id: "admin4"; label: "Admin 4"; adminLevel: 4; disabled?: false }
   | { id: "mountain"; label: "Mountain"; kind: OsmKind; disabled?: false }
   | { id: "park"; label: "Park"; kind: OsmKind; disabled?: false }
-  | { id: "water"; label: "Water/Coast"; kind: OsmKind; disabled?: false }
-  | { id: "landmass"; label: "Landmass"; disabled: true; reason: string }
+  | { id: "water"; label: "Water / Coast"; kind: OsmKind; disabled?: false }
+  | { id: "landmass"; label: "Landmass"; disabled: false; kind?: OsmKind }
   | { id: "hospital"; label: "Hospital"; kind: OsmKind; disabled?: false }
   | { id: "library"; label: "Library"; kind: OsmKind; disabled?: false }
   | { id: "government"; label: "Government"; kind: OsmKind; disabled?: false };
@@ -141,8 +141,8 @@ const MATCHING_TILES: MatchingTile[] = [
   { id: "admin4", label: "Admin 4", adminLevel: 4 },
   { id: "mountain", label: "Mountain", kind: "peak" },
   { id: "park", label: "Park", kind: "park" },
-  { id: "water", label: "Water/Coast", kind: "water" },
-  { id: "landmass", label: "Landmass", disabled: true, reason: "Requires landmask dataset" },
+  { id: "water", label: "Water / Coast", kind: "water" },
+  { id: "landmass", label: "Landmass", disabled: false },
   { id: "hospital", label: "Hospital", kind: "hospital" },
   { id: "library", label: "Library", kind: "library" },
   { id: "government", label: "Government", kind: "government" }
@@ -154,7 +154,7 @@ const MEASURING_TILES: Array<{ label: string; kind: OsmKind }> = [
   { label: "Transit Line", kind: "metro_station" },
   { label: "Mountain", kind: "peak" },
   { label: "Park", kind: "park" },
-  { label: "Water/Coast", kind: "water" },
+  { label: "Water / Coast", kind: "water" },
   { label: "Hospital", kind: "hospital" },
   { label: "Library", kind: "library" },
   { label: "Museum", kind: "museum" },
@@ -257,7 +257,7 @@ export default function JetLagMenu() {
               {MATCHING_TILES.map((t) => {
                 const disabled = t.disabled || !candidate || !seeker;
                 const title =
-                  t.id === "landmass" ? t.reason : !seeker ? "Requires seeker GPS" : !candidate ? "Requires area" : "";
+                  t.id === "landmass" ? "Landmass matching" : !seeker ? "Requires seeker GPS" : !candidate ? "Requires area" : "";
                 return (
                   <button
                     key={t.id}
@@ -281,6 +281,11 @@ export default function JetLagMenu() {
                     const tile = MATCHING_TILES.find(t => t.id === matchingSelected);
                     if (!tile) return;
                     if ("adminLevel" in tile) return applyMatchingAdmin(tile.adminLevel, "YES");
+                    if (tile.id === "landmass") {
+                        // Temp landmass implementation: same as country/admin1 logic for now, or just enabled but no-op
+                        // Since we don't have landmass geometry, we can use applyMatchingAdmin(1) as a proxy for "same region"
+                        return applyMatchingAdmin(1, "YES");
+                    }
                     if ("kind" in tile) return applyMatching(tile.kind, "YES");
                   }}
                   disabled={!candidate || !seeker}
@@ -294,6 +299,9 @@ export default function JetLagMenu() {
                     const tile = MATCHING_TILES.find(t => t.id === matchingSelected);
                     if (!tile) return;
                     if ("adminLevel" in tile) return applyMatchingAdmin(tile.adminLevel, "NO");
+                    if (tile.id === "landmass") {
+                        return applyMatchingAdmin(1, "NO");
+                    }
                     if ("kind" in tile) return applyMatching(tile.kind, "NO");
                   }}
                   disabled={!candidate || !seeker}
