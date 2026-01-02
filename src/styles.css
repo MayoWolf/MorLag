@@ -913,11 +913,18 @@ code {
   font-size: 11px;
   font-weight: 900;
   line-height: 1.05;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  max-width: 100%;
   color: inherit;
+  
+  /* "One word per line" effect */
+  white-space: normal;
+  width: min-content;
+  max-width: 100%;
+  display: block;
+  margin: 0 auto;
+  
+  /* Safety for very long words */
+  overflow-wrap: break-word;
+  word-break: normal;
 }
 
 .tileSub {
