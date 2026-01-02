@@ -148,18 +148,26 @@ const MATCHING_TILES: MatchingTile[] = [
   { id: "government", label: "Government", kind: "government" }
 ];
 
-const MEASURING_TILES: Array<{ label: string; kind: OsmKind }> = [
-  { label: "Airport", kind: "airport" },
-  { label: "Rail Station", kind: "trainstation" },
-  { label: "Transit Line", kind: "metro_station" },
-  { label: "Mountain", kind: "peak" },
-  { label: "Park", kind: "park" },
-  { label: "Water / Coast", kind: "water" },
-  { label: "Hospital", kind: "hospital" },
-  { label: "Library", kind: "library" },
-  { label: "Museum", kind: "museum" },
-  { label: "Zoo", kind: "zoo" },
-  { label: "Government", kind: "government" }
+const MEASURING_TILES: Array<{ label: string; kind: OsmKind; question: string }> = [
+  { label: "Airport", kind: "airport", question: "Compared to me, are you closer to an airport?" },
+  {
+    label: "Rail Station",
+    kind: "trainstation",
+    question: "Compared to me, are you closer to a train or rail station?"
+  },
+  { label: "Transit Line", kind: "metro_station", question: "Compared to me, are you closer to a transit line?" },
+  { label: "Mountain", kind: "peak", question: "Compared to me, are you closer to a mountain?" },
+  { label: "Park", kind: "park", question: "Compared to me, are you closer to a park?" },
+  {
+    label: "Water / Coast",
+    kind: "water",
+    question: "Compared to me, are you closer to a coast or body of water?"
+  },
+  { label: "Hospital", kind: "hospital", question: "Compared to me, are you closer to a hospital?" },
+  { label: "Library", kind: "library", question: "Compared to me, are you closer to a library?" },
+  { label: "Museum", kind: "museum", question: "Compared to me, are you closer to a museum?" },
+  { label: "Zoo", kind: "zoo", question: "Compared to me, are you closer to a zoo?" },
+  { label: "Government", kind: "government", question: "Compared to me, are you closer to a government building?" }
 ];
 
 const TENTACLE_TILES: Array<{ label: string; kind: PoiKind; radiusMiles: number; distLabel: string }> = [
@@ -339,7 +347,6 @@ export default function JetLagMenu() {
                   disabled={!candidate || !seeker}
                   onClick={() => {
                     setMeasuringSelected(t.kind);
-                    applyMeasuring(t.kind, measuringLastAnswer);
                   }}
                   type="button"
                 >
@@ -349,6 +356,10 @@ export default function JetLagMenu() {
             </div>
             {measuringSelected && (
               <div style={{ marginTop: 10, display: "flex", gap: 8, flexWrap: "wrap" }}>
+                <div style={{ width: "100%", fontSize: 12, fontWeight: 800 }}>
+                  {MEASURING_TILES.find((t) => t.kind === measuringSelected)?.question ??
+                    "Compared to me, are you closer or farther?"}
+                </div>
                 <button
                   type="button"
                   className="tileBtn"
