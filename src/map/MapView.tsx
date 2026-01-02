@@ -109,19 +109,22 @@ export default function MapView() {
       map.resize();
     });
 
-    // Handle window resize
-    let resizeTimeout: ReturnType<typeof setTimeout> | null = null;
+    // Handle window resize and container resize
     const handleResize = () => {
-      if (resizeTimeout) clearTimeout(resizeTimeout);
-      resizeTimeout = setTimeout(() => {
-        map.resize();
-      }, 100);
+      map.resize();
     };
     window.addEventListener("resize", handleResize);
 
+    const resizeObserver = new ResizeObserver(() => {
+      map.resize();
+    });
+    if (containerRef.current) {
+      resizeObserver.observe(containerRef.current);
+    }
+
     return () => {
       window.removeEventListener("resize", handleResize);
-      if (resizeTimeout) clearTimeout(resizeTimeout);
+      resizeObserver.disconnect();
       seekerMarkerRef.current?.remove();
       seekerMarkerRef.current = null;
       map.remove();
