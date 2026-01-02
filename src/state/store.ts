@@ -98,6 +98,10 @@ type MorLagState = {
   selectedIsoA2: string;
   candidate: AnyPoly | null;
 
+  // UI busy overlay
+  isBusy: boolean;
+  busyMessage: string;
+
   seekerLngLat: [number, number] | null;
   seekerAccuracyM: number | null;
   seekerLastUpdatedMs: number | null;
@@ -140,6 +144,7 @@ type MorLagState = {
   selectSearchResult: (result: SearchResult) => void;
   applyPoiWithin: (kind: PoiKind, radiusMiles: number, answer: "YES" | "NO") => Promise<void>;
   setLastToast: (toast: string | null) => void;
+  setBusy: (isBusy: boolean, message?: string) => void;
 };
 
 export const useStore = create<MorLagState>((set, get) => {
@@ -149,6 +154,9 @@ export const useStore = create<MorLagState>((set, get) => {
     countries,
     selectedIsoA2: "",
     candidate: null,
+
+    isBusy: false,
+    busyMessage: "Loading…",
 
     seekerLngLat: null,
     seekerAccuracyM: null,
@@ -328,6 +336,7 @@ export const useStore = create<MorLagState>((set, get) => {
       }
 
       try {
+        get().setBusy(true, "Loading…");
         const candidateFeature: Feature<AnyPoly> = { type: "Feature", geometry: candidate, properties: {} };
         const bb = turfBbox(candidateFeature) as [number, number, number, number]; // [minLon,minLat,maxLon,maxLat]
         // Fetch a wider POI set so nearest identity is well-defined across the whole possible area.
@@ -407,6 +416,8 @@ export const useStore = create<MorLagState>((set, get) => {
       } catch (error) {
         console.error("Matching error:", error);
         set({ lastToast: error instanceof Error ? error.message : "Matching operation failed" });
+      } finally {
+        get().setBusy(false);
       }
     },
 
@@ -429,6 +440,7 @@ export const useStore = create<MorLagState>((set, get) => {
       const localCache = new Map<string, string | null>();
 
       try {
+        get().setBusy(true, "Loading…");
         const seekerRev = await reverseGeocode(seeker[1], seeker[0]);
         const addrS = (seekerRev.address ?? {}) as Record<string, string>;
         const pickAdmin = (addr: Record<string, string>): string | "" => {
@@ -546,6 +558,8 @@ export const useStore = create<MorLagState>((set, get) => {
       } catch (error) {
         console.error("Matching admin error:", error);
         set({ lastToast: error instanceof Error ? error.message : "Admin matching failed" });
+      } finally {
+        get().setBusy(false);
       }
     },
 
@@ -558,6 +572,7 @@ export const useStore = create<MorLagState>((set, get) => {
       }
 
       try {
+        get().setBusy(true, "Loading…");
         const candidateFeature: Feature<AnyPoly> = { type: "Feature", geometry: candidate, properties: {} };
         const bb = turfBbox(candidateFeature) as [number, number, number, number]; // [minLon,minLat,maxLon,maxLat]
         const expanded = expandBbox([bb[1], bb[0], bb[3], bb[2]], 75); // ~75km padding
@@ -611,6 +626,8 @@ export const useStore = create<MorLagState>((set, get) => {
       } catch (error) {
         console.error("Measuring error:", error);
         set({ lastToast: error instanceof Error ? error.message : "Measuring operation failed" });
+      } finally {
+        get().setBusy(false);
       }
     },
 
@@ -658,6 +675,10 @@ export const useStore = create<MorLagState>((set, get) => {
       set({ lastToast: toast });
     },
 
+    setBusy: (isBusy: boolean, message = "Loading…") => {
+      set({ isBusy, busyMessage: message });
+    },
+
     runSearch: async () => {
       const query = get().searchQuery.trim();
       if (!query) {
@@ -703,6 +724,7 @@ export const useStore = create<MorLagState>((set, get) => {
       const radiusKm = radiusMiles * 1.60934;
 
       try {
+        get().setBusy(true, "Loading…");
         // Compute candidate bbox and expand by radius
         const candidateFeature: Feature<AnyPoly> = {
           type: "Feature",
@@ -775,6 +797,8 @@ export const useStore = create<MorLagState>((set, get) => {
         set({
           lastToast: error instanceof Error ? error.message : "POI operation failed"
         });
+      } finally {
+        get().setBusy(false);
       }
     }
   };

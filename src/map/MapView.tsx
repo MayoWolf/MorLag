@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useRef } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import maplibregl from "maplibre-gl";
 import "maplibre-gl/dist/maplibre-gl.css";
 import { bbox as turfBbox, simplify as turfSimplify } from "@turf/turf";
@@ -26,6 +26,10 @@ export default function MapView() {
 
   const candidate = useStore(s => s.candidate) as AnyPoly | null;
   const seeker = useStore(s => s.seekerLngLat);
+  const isBusy = useStore(s => s.isBusy);
+  const busyMessage = useStore(s => s.busyMessage);
+
+  const [showOverlay, setShowOverlay] = useState(false);
 
   // Display-only simplification: never use this for computation/state.
   // Tolerance is in degrees. 0.0005° ≈ 55m at the equator.
@@ -132,6 +136,19 @@ export default function MapView() {
     };
   }, []);
 
+  // Busy overlay delay (avoid flashing for very fast ops)
+  useEffect(() => {
+    let timer: ReturnType<typeof setTimeout> | null = null;
+    if (isBusy) {
+      timer = setTimeout(() => setShowOverlay(true), 150);
+    } else {
+      setShowOverlay(false);
+    }
+    return () => {
+      if (timer) clearTimeout(timer);
+    };
+  }, [isBusy]);
+
   // Update candidate polygons
   useEffect(() => {
     const map = mapRef.current;
@@ -160,5 +177,14 @@ export default function MapView() {
     seekerMarkerRef.current = m;
   }, [seeker]);
 
-  return <div className="mapRoot" ref={containerRef} />;
+  return (
+    <div className="mapPane">
+      <div className="mapRoot" ref={containerRef} />
+      {showOverlay && (
+        <div className="mapOverlay">
+          <div className="mapOverlayBox">{busyMessage || "Loading…"}</div>
+        </div>
+      )}
+    </div>
+  );
 }

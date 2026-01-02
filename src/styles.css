@@ -44,9 +44,36 @@ body {
   overflow: hidden;
 }
 
+.mapPane {
+  position: relative;
+  width: 100%;
+  height: 100%;
+}
+
 .mapRoot {
   width: 100%;
   height: 100%;
+}
+
+.mapOverlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.25);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 50;
+  pointer-events: all;
+  opacity: 1;
+  transition: opacity 160ms ease;
+}
+
+.mapOverlayBox {
+  background: rgba(255, 255, 255, 0.9);
+  padding: 14px 18px;
+  border-radius: 14px;
+  font-weight: 800;
+  letter-spacing: 0.02em;
 }
 
 /* Mobile Layout: Stacked, Global Scroll */
@@ -321,9 +348,10 @@ button:disabled {
   background: #f8f8f8;
   border-radius: 8px;
   padding: 10px 8px;
-  font-weight: 700;
-  font-size: 13px;
-  line-height: 1;
+  font-weight: 800;
+  font-size: clamp(11px, 2.4vw, 14px);
+  line-height: 1.05;
+  letter-spacing: 0.02em;
   cursor: pointer;
   min-height: 40px;
   display: flex;
@@ -331,7 +359,9 @@ button:disabled {
   justify-content: center;
   text-align: center;
   user-select: none;
-  overflow-wrap: anywhere;
+  white-space: normal;
+  word-break: break-word;
+  overflow: hidden;
 }
 
 .tileBtn:active {
@@ -384,9 +414,10 @@ button:disabled {
   background: #f8f8f8;
   border-radius: 8px;
   padding: 10px 8px;
-  font-weight: 700;
-  font-size: 13px;
-  line-height: 1;
+  font-weight: 800;
+  font-size: clamp(11px, 2.4vw, 14px);
+  line-height: 1.05;
+  letter-spacing: 0.02em;
   cursor: pointer;
   min-height: 40px;
   display: flex;
@@ -394,7 +425,9 @@ button:disabled {
   justify-content: center;
   text-align: center;
   user-select: none;
-  overflow-wrap: anywhere;
+  white-space: normal;
+  word-break: break-word;
+  overflow: hidden;
 }
 
 .tile-button:active {
@@ -834,8 +867,10 @@ code {
   min-height:44px;
   padding:10px 8px;
   color:#fff;
-  font-weight:900;
-  font-size:12px;
+  font-weight:800;
+  font-size:clamp(11px, 2.4vw, 14px);
+  line-height:1.05;
+  letter-spacing:0.02em;
   text-transform:uppercase;
   display:flex;
   align-items:center;
@@ -844,9 +879,9 @@ code {
   cursor:pointer;
   user-select:none;
   min-width: 0;
-  /* Prevent letter-by-letter wrapping when tiles get narrow */
-  overflow-wrap: normal;
-  word-break: normal;
+  white-space: normal;
+  word-break: break-word;
+  overflow: hidden;
   hyphens: none;
 }
 .jlTile:active { transform: scale(0.98); }
