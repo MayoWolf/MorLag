@@ -7,7 +7,13 @@ import { applyRadar } from "../geo/radar";
 import { applyThermometer } from "../geo/thermometer";
 import { geocode, normalizeGeometry, reverseGeocode, type SearchResult } from "../services/geocode";
 import { fetchPois, type PoiKind } from "../services/overpass";
-import { expandBbox, buildBufferFromPoints, applyPoiWithin } from "../geo/poiWithin";
+import {
+  expandBbox,
+  buildBufferFromPoints,
+  applyPoiWithin,
+  measuringFilterByCloserFarther,
+  tentaclesFilterByWithinRadius
+} from "../geo/poiWithin";
 import { applyMatchingVoronoi } from "../geo/matchingVoronoi";
 import type { OsmKind } from "../../shared/osmKinds";
 import { samplePointsInPoly } from "../geo/sampling";
@@ -571,6 +577,8 @@ export const useStore = create<MorLagState>((set, get) => {
         return;
       }
 
+      console.log("[MEASURING]", kind, answer);
+
       try {
         get().setBusy(true, "Loading…");
         const candidateFeature: Feature<AnyPoly> = { type: "Feature", geometry: candidate, properties: {} };
@@ -597,7 +605,7 @@ export const useStore = create<MorLagState>((set, get) => {
         const thresholdKm = Math.max(0, thresholdM) / 1000;
 
         const bufferFeature = buildBufferFromPoints(pois, thresholdKm);
-        const nextFeature = applyPoiWithin(candidateFeature, bufferFeature, answer === "CLOSER");
+        const nextFeature = measuringFilterByCloserFarther(candidateFeature, bufferFeature, answer);
 
         if (!nextFeature) {
           set({
@@ -720,6 +728,8 @@ export const useStore = create<MorLagState>((set, get) => {
         return;
       }
 
+      console.log("[TENTACLES]", kind, radiusMiles, answer);
+
       // Convert miles to km
       const radiusKm = radiusMiles * 1.60934;
 
@@ -767,7 +777,7 @@ export const useStore = create<MorLagState>((set, get) => {
         const bufferFeature = buildBufferFromPoints(points, radiusKm);
 
         // Apply constraint
-        const next = applyPoiWithin(candidateFeature, bufferFeature, answer === "YES");
+        const next = tentaclesFilterByWithinRadius(candidateFeature, bufferFeature, answer);
 
         if (!next) {
           set({

@@ -141,3 +141,31 @@ export function applyPoiWithin(
   }
 }
 
+/**
+ * MEASURING: Closer or Farther than reference distance to nearest feature type
+ * - CLOSER: keep areas within the (derived) threshold distance
+ * - FARTHER: keep areas outside the (derived) threshold distance
+ *
+ * Note: the threshold distance is computed by the caller from the seeker's nearest feature distance.
+ */
+export function measuringFilterByCloserFarther(
+  candidate: Feature<AnyPoly>,
+  bufferFeature: Feature<Polygon | MultiPolygon>,
+  answer: "CLOSER" | "FARTHER"
+): Feature<AnyPoly> | null {
+  return applyPoiWithin(candidate, bufferFeature, answer === "CLOSER");
+}
+
+/**
+ * TENTACLES: Fixed radius YES/NO check against a feature type.
+ * - YES: keep areas within the radius
+ * - NO: keep areas outside the radius
+ */
+export function tentaclesFilterByWithinRadius(
+  candidate: Feature<AnyPoly>,
+  bufferFeature: Feature<Polygon | MultiPolygon>,
+  answer: "YES" | "NO"
+): Feature<AnyPoly> | null {
+  return applyPoiWithin(candidate, bufferFeature, answer === "YES");
+}
+
