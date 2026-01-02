@@ -8,7 +8,6 @@ import { applyThermometer } from "../geo/thermometer";
 import { geocode, normalizeGeometry, reverseGeocode, type SearchResult } from "../services/geocode";
 import { fetchPois, type PoiKind } from "../services/overpass";
 import { expandBbox, buildBufferFromPoints, applyPoiWithin } from "../geo/poiWithin";
-import { applyMatchingSameNearest } from "../geo/matchingMeasuring";
 import { applyMatchingVoronoi } from "../geo/matchingVoronoi";
 import type { OsmKind } from "../../shared/osmKinds";
 import { samplePointsInPoly } from "../geo/sampling";
