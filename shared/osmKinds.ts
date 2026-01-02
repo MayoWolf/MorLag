@@ -27,7 +27,8 @@ export type OsmKind =
   | "highway_access"
   | "park_national"
   | "castle_fort"
-  | "transit_station";
+  | "transit_station"
+  | "water";
 
 export type OverpassClause = {
   key: string;
@@ -100,7 +101,14 @@ export const OSM_KIND_CLAUSES: Record<OsmKind, OverpassClause[]> = {
   highway_access: [{ key: "highway", value: "motorway_junction" }],
 
   // Transit station: railway=station OR public_transport=station
-  transit_station: [{ key: "railway", value: "station" }, { key: "public_transport", value: "station" }]
+  transit_station: [{ key: "railway", value: "station" }, { key: "public_transport", value: "station" }],
+
+  // Water / coastline best-effort: natural=water OR waterway=riverbank OR natural=coastline
+  water: [
+    { key: "natural", value: "water" },
+    { key: "waterway", value: "riverbank" },
+    { key: "natural", value: "coastline" }
+  ]
 };
 
 export function isOsmKind(x: string): x is OsmKind {

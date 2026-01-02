@@ -115,25 +115,51 @@ const RADAR_DISTANCES: Array<{ miles: number; label: string }> = [
 
 type MatchingTile =
   | { id: "airport"; label: "Airport"; kind: OsmKind; disabled?: false }
-  | { id: "region"; label: "Region"; disabled?: false }
-  | { id: "landmass"; label: "Landmass"; disabled: true; reason: string };
+  | { id: "rail"; label: "Rail Station"; kind: OsmKind; disabled?: false }
+  | { id: "transit_line"; label: "Transit Line"; kind: OsmKind; disabled?: false }
+  | { id: "highway"; label: "Highway Access"; kind: OsmKind; disabled?: false }
+  | { id: "admin1"; label: "Admin 1"; adminLevel: 1; disabled?: false }
+  | { id: "admin2"; label: "Admin 2"; adminLevel: 2; disabled?: false }
+  | { id: "admin3"; label: "Admin 3"; adminLevel: 3; disabled?: false }
+  | { id: "admin4"; label: "Admin 4"; adminLevel: 4; disabled?: false }
+  | { id: "mountain"; label: "Mountain"; kind: OsmKind; disabled?: false }
+  | { id: "park"; label: "Park"; kind: OsmKind; disabled?: false }
+  | { id: "water"; label: "Water/Coast"; kind: OsmKind; disabled?: false }
+  | { id: "landmass"; label: "Landmass"; disabled: true; reason: string }
+  | { id: "hospital"; label: "Hospital"; kind: OsmKind; disabled?: false }
+  | { id: "library"; label: "Library"; kind: OsmKind; disabled?: false }
+  | { id: "government"; label: "Government"; kind: OsmKind; disabled?: false };
 
 const MATCHING_TILES: MatchingTile[] = [
   { id: "airport", label: "Airport", kind: "airport" },
-  { id: "region", label: "Region" },
-  { id: "landmass", label: "Landmass", disabled: true, reason: "Requires landmask dataset" }
+  { id: "rail", label: "Rail Station", kind: "trainstation" },
+  { id: "transit_line", label: "Transit Line", kind: "metro_station" },
+  { id: "highway", label: "Highway Access", kind: "highway_access" },
+  { id: "admin1", label: "Admin 1", adminLevel: 1 },
+  { id: "admin2", label: "Admin 2", adminLevel: 2 },
+  { id: "admin3", label: "Admin 3", adminLevel: 3 },
+  { id: "admin4", label: "Admin 4", adminLevel: 4 },
+  { id: "mountain", label: "Mountain", kind: "peak" },
+  { id: "park", label: "Park", kind: "park" },
+  { id: "water", label: "Water/Coast", kind: "water" },
+  { id: "landmass", label: "Landmass", disabled: true, reason: "Requires landmask dataset" },
+  { id: "hospital", label: "Hospital", kind: "hospital" },
+  { id: "library", label: "Library", kind: "library" },
+  { id: "government", label: "Government", kind: "government" }
 ];
 
 const MEASURING_TILES: Array<{ label: string; kind: OsmKind }> = [
   { label: "Airport", kind: "airport" },
+  { label: "Rail Station", kind: "trainstation" },
+  { label: "Transit Line", kind: "metro_station" },
+  { label: "Mountain", kind: "peak" },
   { label: "Park", kind: "park" },
-  { label: "Mountain/Peak", kind: "peak" },
-  { label: "Zoo", kind: "zoo" },
-  { label: "Museum", kind: "museum" },
+  { label: "Water/Coast", kind: "water" },
   { label: "Hospital", kind: "hospital" },
   { label: "Library", kind: "library" },
-  { label: "Government", kind: "government" },
-  { label: "Transit Station", kind: "transit_station" }
+  { label: "Museum", kind: "museum" },
+  { label: "Zoo", kind: "zoo" },
+  { label: "Government", kind: "government" }
 ];
 
 const TENTACLE_TILES: Array<{ label: string; kind: PoiKind; radiusMiles: number; distLabel: string }> = [
@@ -181,7 +207,7 @@ export default function JetLagMenu() {
   const applyThermo = useStore(s => s.applyThermo);
   const applyPoiWithin = useStore(s => s.applyPoiWithin);
   const applyMatching = useStore(s => s.applyMatching);
-  const applyMatchingRegion = useStore(s => s.applyMatchingRegion);
+  const applyMatchingAdmin = useStore(s => s.applyMatchingAdmin);
   const applyMeasuring = useStore(s => s.applyMeasuring);
 
   const [poiModalKind, setPoiModalKind] = useState<PoiKind | null>(null);
@@ -252,8 +278,10 @@ export default function JetLagMenu() {
                   type="button"
                   className="tileBtn"
                   onClick={() => {
-                    if (matchingSelected === "airport") return applyMatching("airport", "YES");
-                    if (matchingSelected === "region") return applyMatchingRegion("YES");
+                    const tile = MATCHING_TILES.find(t => t.id === matchingSelected);
+                    if (!tile) return;
+                    if ("adminLevel" in tile) return applyMatchingAdmin(tile.adminLevel, "YES");
+                    if ("kind" in tile) return applyMatching(tile.kind, "YES");
                   }}
                   disabled={!candidate || !seeker}
                 >
@@ -263,8 +291,10 @@ export default function JetLagMenu() {
                   type="button"
                   className="tileBtn"
                   onClick={() => {
-                    if (matchingSelected === "airport") return applyMatching("airport", "NO");
-                    if (matchingSelected === "region") return applyMatchingRegion("NO");
+                    const tile = MATCHING_TILES.find(t => t.id === matchingSelected);
+                    if (!tile) return;
+                    if ("adminLevel" in tile) return applyMatchingAdmin(tile.adminLevel, "NO");
+                    if ("kind" in tile) return applyMatching(tile.kind, "NO");
                   }}
                   disabled={!candidate || !seeker}
                 >

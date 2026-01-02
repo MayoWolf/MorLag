@@ -127,7 +127,7 @@ type MorLagState = {
   applyThermo: (hotter: boolean) => void;
 
   applyMatching: (kind: OsmKind, answer: "YES" | "NO") => Promise<void>;
-  applyMatchingRegion: (answer: "YES" | "NO") => Promise<void>;
+  applyMatchingAdmin: (level: 1 | 2 | 3 | 4, answer: "YES" | "NO") => Promise<void>;
   applyMeasuring: (kind: OsmKind, answer: "CLOSER" | "FARTHER") => Promise<void>;
 
   undo: () => void;
@@ -391,7 +391,7 @@ export const useStore = create<MorLagState>((set, get) => {
       }
     },
 
-    applyMatchingRegion: async (answer: "YES" | "NO") => {
+    applyMatchingAdmin: async (level: 1 | 2 | 3 | 4, answer: "YES" | "NO") => {
       const candidate = get().candidate;
       const seeker = get().seekerLngLat;
       if (!candidate || !seeker) {
@@ -411,13 +411,30 @@ export const useStore = create<MorLagState>((set, get) => {
 
       try {
         const seekerRev = await reverseGeocode(seeker[1], seeker[0]);
-        const seekerRegion = seekerRev.region ? norm(seekerRev.region) : "";
-        if (!seekerRegion) {
-          set({ lastToast: "Could not determine seeker region." });
+        const addrS = (seekerRev.address ?? {}) as Record<string, string>;
+        const pickAdmin = (addr: Record<string, string>): string | "" => {
+          if (level === 1) return addr.state || addr.region || addr.province || "";
+          if (level === 2) return addr.county || addr.state_district || addr.district || "";
+          if (level === 3) return addr.city || addr.town || addr.municipality || addr.village || "";
+          return (
+            addr.borough ||
+            addr.ward ||
+            addr.suburb ||
+            addr.city_district ||
+            addr.quarter ||
+            addr.neighbourhood ||
+            ""
+          );
+        };
+        const seekerValRaw = pickAdmin(addrS);
+        const seekerVal = seekerValRaw ? norm(seekerValRaw) : "";
+        if (!seekerVal) {
+          set({ lastToast: `Could not determine admin level ${level} for seeker.` });
           return;
         }
 
-        const { points, stepKm } = samplePointsInPoly(candidate, { maxPoints: 90, minStepKm: 25 });
+        // Reverse-geocode is expensive; use a coarser grid.
+        const { points, stepKm } = samplePointsInPoly(candidate, { maxPoints: 28, minStepKm: 80 });
         if (points.length === 0) {
           set({ lastToast: "No candidate samples to evaluate." });
           return;
@@ -429,10 +446,12 @@ export const useStore = create<MorLagState>((set, get) => {
           let region = localCache.get(key);
           if (region === undefined) {
             const rev = await reverseGeocode(lat, lon);
-            region = rev.region ? norm(rev.region) : null;
+            const addr = (rev.address ?? {}) as Record<string, string>;
+            const valRaw = pickAdmin(addr);
+            region = valRaw ? norm(valRaw) : null;
             localCache.set(key, region);
           }
-          const same = region ? region === seekerRegion : false;
+          const same = region ? region === seekerVal : false;
           const keep = answer === "YES" ? same : !same;
           if (keep) kept.push({ lat, lon });
         }
@@ -449,7 +468,7 @@ export const useStore = create<MorLagState>((set, get) => {
                 id: uid(),
                 ts: Date.now(),
                 type: "MATCHING",
-                kind: "region",
+                kind: `admin${level}`,
                 answer,
                 poiCount: 0,
                 sampleCount: points.length,
@@ -475,7 +494,7 @@ export const useStore = create<MorLagState>((set, get) => {
                 id: uid(),
                 ts: Date.now(),
                 type: "MATCHING",
-                kind: "region",
+                kind: `admin${level}`,
                 answer,
                 poiCount: 0,
                 sampleCount: points.length,
@@ -488,7 +507,7 @@ export const useStore = create<MorLagState>((set, get) => {
 
         set({
           candidate: clipped,
-          lastToast: `Matching region ${answer}: kept ${kept.length}/${points.length}`,
+          lastToast: `Matching admin${level} ${answer}: kept ${kept.length}/${points.length}`,
           undoStack: [...get().undoStack, candidate],
           redoStack: [],
           history: [
@@ -497,7 +516,7 @@ export const useStore = create<MorLagState>((set, get) => {
               id: uid(),
               ts: Date.now(),
               type: "MATCHING",
-              kind: "region",
+              kind: `admin${level}`,
               answer,
               poiCount: 0,
               sampleCount: points.length,
@@ -506,8 +525,8 @@ export const useStore = create<MorLagState>((set, get) => {
           ]
         });
       } catch (error) {
-        console.error("Matching region error:", error);
-        set({ lastToast: error instanceof Error ? error.message : "Region matching failed" });
+        console.error("Matching admin error:", error);
+        set({ lastToast: error instanceof Error ? error.message : "Admin matching failed" });
       }
     },
 
