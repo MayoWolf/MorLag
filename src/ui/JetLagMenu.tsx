@@ -39,16 +39,6 @@ const Icons = {
   ),
 };
 
-const renderLabel = (label: string) => {
-  const parts = label.split("\n");
-  return parts.map((part, idx) => (
-    <React.Fragment key={idx}>
-      {part}
-      {idx < parts.length - 1 ? <br /> : null}
-    </React.Fragment>
-  ));
-};
-
 // Import PoiModal component logic
 interface PoiModalProps {
   kind: PoiKind;
@@ -125,8 +115,8 @@ const RADAR_DISTANCES: Array<{ miles: number; label: string }> = [
 
 type MatchingTile =
   | { id: "airport"; label: "Airport"; kind: OsmKind; disabled?: false }
-  | { id: "rail"; label: "Rail\nStation"; kind: OsmKind; disabled?: false }
-  | { id: "transit_line"; label: "Transit\nLine"; kind: OsmKind; disabled?: false }
+  | { id: "rail"; label: "Rail Station"; kind: OsmKind; disabled?: false }
+  | { id: "transit_line"; label: "Transit Line"; kind: OsmKind; disabled?: false }
   | { id: "highway"; label: "Highway Access"; kind: OsmKind; disabled?: false }
   | { id: "admin1"; label: "Admin 1"; adminLevel: 1; disabled?: false }
   | { id: "admin2"; label: "Admin 2"; adminLevel: 2; disabled?: false }
@@ -142,8 +132,8 @@ type MatchingTile =
 
 const MATCHING_TILES: MatchingTile[] = [
   { id: "airport", label: "Airport", kind: "airport" },
-  { id: "rail", label: "Rail\nStation", kind: "trainstation" },
-  { id: "transit_line", label: "Transit\nLine", kind: "metro_station" },
+  { id: "rail", label: "Rail Station", kind: "trainstation" },
+  { id: "transit_line", label: "Transit Line", kind: "metro_station" },
   { id: "highway", label: "Highway Access", kind: "highway_access" },
   { id: "admin1", label: "Admin 1", adminLevel: 1 },
   { id: "admin2", label: "Admin 2", adminLevel: 2 },
@@ -160,8 +150,8 @@ const MATCHING_TILES: MatchingTile[] = [
 
 const MEASURING_TILES: Array<{ label: string; kind: OsmKind }> = [
   { label: "Airport", kind: "airport" },
-  { label: "Rail\nStation", kind: "trainstation" },
-  { label: "Transit\nLine", kind: "metro_station" },
+  { label: "Rail Station", kind: "trainstation" },
+  { label: "Transit Line", kind: "metro_station" },
   { label: "Mountain", kind: "peak" },
   { label: "Park", kind: "park" },
   { label: "Water/Coast", kind: "water" },
@@ -202,8 +192,8 @@ const POI_KINDS: Array<{ kind: PoiKind; label: string }> = [
   { kind: "castle", label: "Castle" },
   { kind: "peak", label: "Peak" },
   { kind: "airport", label: "Airport" },
-  { kind: "trainstation", label: "Train\nStation" },
-  { kind: "ferry", label: "Ferry\nTerminal" }
+  { kind: "trainstation", label: "Train Station" },
+  { kind: "ferry", label: "Ferry Terminal" }
 ];
 
 export default function JetLagMenu() {
@@ -277,7 +267,7 @@ export default function JetLagMenu() {
                     type="button"
                     title={title}
                   >
-                    {renderLabel(t.label)}
+                    {t.label}
                   </button>
                 );
               })}
@@ -345,7 +335,7 @@ export default function JetLagMenu() {
                   }}
                   type="button"
                 >
-                  {renderLabel(t.label)}
+                  {t.label}
                 </button>
               ))}
             </div>
@@ -564,7 +554,7 @@ export default function JetLagMenu() {
                     type="button"
                     title={!seeker ? "Requires seeker GPS" : !candidate ? "Requires area" : ""}
                   >
-                    <span>{renderLabel(t.label)}</span>
+                    <span>{t.label}</span>
                     <span style={{ fontSize: "10px", opacity: 0.8 }}>{t.distLabel}</span>
                   </button>
                 );
@@ -609,7 +599,7 @@ export default function JetLagMenu() {
                   onClick={() => handlePoiClick(kind, label)}
                   disabled={!candidate || !seeker}
                 >
-                  {renderLabel(label)}
+                  {label}
                 </button>
               ))}
             </div>
