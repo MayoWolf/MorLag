@@ -861,28 +861,43 @@ code {
   .jlGrid.poi { grid-template-columns: repeat(3, minmax(0, 1fr)); }
 }
 
+/* MUST be applied to the real tile button class */
 .jlTile {
+  /* Debug outline */
+  outline: 4px solid hotpink !important;
+
   border:none;
   border-radius:10px;
-  min-height:44px;
-  padding:10px 8px;
+  min-height: auto !important; /* Overriding previous min-height */
+  
+  /* FORCE SQUARE */
+  aspect-ratio: 1 / 1 !important;
+  width: 100% !important;
+  
+  /* Flex centering */
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  text-align: center !important;
+  
+  /* Padding */
+  padding: 8px !important;
+  
+  /* Font & Text */
   color:#fff;
   font-weight:800;
-  font-size:clamp(11px, 2.4vw, 14px);
-  line-height:1.05;
-  letter-spacing:0.02em;
+  font-size: clamp(11px, 1.3vw, 13px) !important;
+  line-height: 1 !important;
   text-transform:uppercase;
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  text-align:center;
+  
+  /* NO WRAP */
+  white-space: nowrap !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  
   cursor:pointer;
   user-select:none;
   min-width: 0;
-  white-space: normal;
-  word-break: break-word;
-  overflow: hidden;
-  hyphens: none;
 }
 .jlTile:active { transform: scale(0.98); }
 .jlTile.disabled { opacity:.35; cursor:not-allowed; }
