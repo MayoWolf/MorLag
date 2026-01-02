@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useRef } from "react";
 import maplibregl from "maplibre-gl";
 import "maplibre-gl/dist/maplibre-gl.css";
-import { bbox as turfBbox } from "@turf/turf";
+import { bbox as turfBbox, simplify as turfSimplify } from "@turf/turf";
 import type { Polygon, MultiPolygon } from "geojson";
 
 import { useStore } from "../state/store";
@@ -27,7 +27,22 @@ export default function MapView() {
   const candidate = useStore(s => s.candidate) as AnyPoly | null;
   const seeker = useStore(s => s.seekerLngLat);
 
-  const candidateFC = useMemo(() => featureCollectionFromGeom(candidate), [candidate]);
+  // Display-only simplification: never use this for computation/state.
+  // Tolerance is in degrees. 0.0005° ≈ 55m at the equator.
+  const displayCandidate = useMemo(() => {
+    if (!candidate) return null;
+    try {
+      const f = { type: "Feature", properties: {}, geometry: candidate } as any;
+      const simplified = turfSimplify(f, { tolerance: 0.0005, highQuality: true }) as any;
+      const g = simplified?.geometry;
+      if (g && (g.type === "Polygon" || g.type === "MultiPolygon")) return g as AnyPoly;
+      return candidate;
+    } catch {
+      return candidate;
+    }
+  }, [candidate]);
+
+  const candidateFC = useMemo(() => featureCollectionFromGeom(displayCandidate), [displayCandidate]);
 
   // Initialize map
   useEffect(() => {

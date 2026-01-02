@@ -65,7 +65,7 @@ export default function History() {
                 <div key={h.id} className="history-item">
                   <div className="history-timestamp">{fmt(h.ts)}</div>
                   <div className="history-action">
-                    <span className="history-action-label">Matching:</span> {h.kind} {h.answer} ({h.keptCount}/{h.sampleCount} samples, {h.poiCount} POIs)
+                    <span className="history-action-label">Matching:</span> {h.kind} {h.answer} ({h.poiCount} POIs)
                   </div>
                 </div>
               );
@@ -74,7 +74,7 @@ export default function History() {
                 <div key={h.id} className="history-item">
                   <div className="history-timestamp">{fmt(h.ts)}</div>
                   <div className="history-action">
-                    <span className="history-action-label">Measuring:</span> {h.kind} {h.answer} ({h.keptCount}/{h.sampleCount} samples, {h.poiCount} POIs)
+                    <span className="history-action-label">Measuring:</span> {h.kind} {h.answer} ({h.poiCount} POIs)
                   </div>
                 </div>
               );

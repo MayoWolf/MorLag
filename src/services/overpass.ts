@@ -38,6 +38,8 @@ export type PoiPoint = {
   lat: number;
   lon: number;
   name?: string;
+  osmType?: "node" | "way" | "relation";
+  key?: string;
 };
 
 export type PoiResult = {

@@ -67,9 +67,9 @@ out center ${limit};
   return query;
 }
 
-function normalizeOverpassResult(data: any): Array<{ id: number; lat: number; lon: number; name?: string }> {
+function normalizeOverpassResult(data: any): Array<{ id: number; lat: number; lon: number; name?: string; osmType?: string; key?: string }> {
   const elements = data.elements || [];
-  const points: Array<{ id: number; lat: number; lon: number; name?: string }> = [];
+  const points: Array<{ id: number; lat: number; lon: number; name?: string; osmType?: string; key?: string }> = [];
 
   for (const elem of elements) {
     let lat: number | undefined;
@@ -89,11 +89,14 @@ function normalizeOverpassResult(data: any): Array<{ id: number; lat: number; lo
     }
 
     if (lat !== undefined && lon !== undefined) {
+      const osmType = typeof elem.type === "string" ? elem.type : undefined;
       points.push({
         id: elem.id,
         lat,
         lon,
-        name: elem.tags?.name || elem.tags?.["name:en"] || undefined
+        name: elem.tags?.name || elem.tags?.["name:en"] || undefined,
+        osmType,
+        key: osmType ? `${osmType}/${elem.id}` : `${elem.id}`
       });
     }
   }

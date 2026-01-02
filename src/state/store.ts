@@ -8,10 +8,12 @@ import { applyThermometer } from "../geo/thermometer";
 import { geocode, normalizeGeometry, reverseGeocode, type SearchResult } from "../services/geocode";
 import { fetchPois, type PoiKind } from "../services/overpass";
 import { expandBbox, buildBufferFromPoints, applyPoiWithin } from "../geo/poiWithin";
-import { applyMatchingSameNearest, applyMeasuringCloserFarther } from "../geo/matchingMeasuring";
+import { applyMatchingSameNearest } from "../geo/matchingMeasuring";
+import { applyMatchingVoronoi } from "../geo/matchingVoronoi";
 import type { OsmKind } from "../../shared/osmKinds";
 import { samplePointsInPoly } from "../geo/sampling";
 import { intersect } from "../geo/clip";
+import { nearestPoiForPoint } from "../geo/nearestPoi";
 
 type AnyPoly = Polygon | MultiPolygon;
 
@@ -329,19 +331,37 @@ export const useStore = create<MorLagState>((set, get) => {
       try {
         const candidateFeature: Feature<AnyPoly> = { type: "Feature", geometry: candidate, properties: {} };
         const bb = turfBbox(candidateFeature) as [number, number, number, number]; // [minLon,minLat,maxLon,maxLat]
-        const expanded = expandBbox([bb[1], bb[0], bb[3], bb[2]], 75); // ~75km padding
-        const pois = await fetchPois(kind as unknown as PoiKind, expanded, 800);
+        // Fetch a wider POI set so nearest identity is well-defined across the whole possible area.
+        // 100mi radar ≈ 161km, use >=200km padding.
+        const expanded = expandBbox([bb[1], bb[0], bb[3], bb[2]], 220);
+        const pois = await fetchPois(kind as unknown as PoiKind, expanded, 2000);
         if (pois.length === 0) {
-          set({ lastToast: `No ${kind} POIs found nearby. Try a larger area.` });
+          set({ lastToast: `Need POI data for ${kind} (0 found). Try a smaller area or different kind.` });
           return;
         }
 
-        const { next, sampleCount, keptCount, seekerNearestId } = applyMatchingSameNearest({
+        const bboxVor: [number, number, number, number] = [expanded[1], expanded[0], expanded[3], expanded[2]];
+        const { next, featureCount, seekerNearestKey, areaBefore, areaAfter, percentRemaining } = applyMatchingVoronoi({
           candidate,
           seekerLngLat: seeker,
           pois,
-          answerYes: answer === "YES"
+          answerYes: answer === "YES",
+          bbox: bboxVor
         });
+
+        console.log("[MATCHING]", {
+          kind,
+          featureCount,
+          seekerNearest: seekerNearestKey,
+          areaBefore,
+          areaAfter,
+          percentRemaining
+        });
+
+        if (!seekerNearestKey || featureCount === 0) {
+          set({ lastToast: `Need POI data for ${kind}.` });
+          return;
+        }
 
         if (!next) {
           set({
@@ -358,8 +378,8 @@ export const useStore = create<MorLagState>((set, get) => {
                 kind,
                 answer,
                 poiCount: pois.length,
-                sampleCount,
-                keptCount
+                sampleCount: 0,
+                keptCount: 0
               }
             ]
           });
@@ -368,7 +388,7 @@ export const useStore = create<MorLagState>((set, get) => {
 
         set({
           candidate: next,
-          lastToast: `Matching ${kind}: kept ${keptCount}/${sampleCount} samples (nearest id ${seekerNearestId})`,
+          lastToast: `Matching ${kind} ${answer}: ${percentRemaining.toFixed(1)}% remains (${pois.length} POIs)`,
           undoStack: [...get().undoStack, candidate],
           redoStack: [],
           history: [
@@ -380,8 +400,8 @@ export const useStore = create<MorLagState>((set, get) => {
               kind,
               answer,
               poiCount: pois.length,
-              sampleCount,
-              keptCount
+              sampleCount: 0,
+              keptCount: 0
             }
           ]
         });
@@ -548,14 +568,24 @@ export const useStore = create<MorLagState>((set, get) => {
           return;
         }
 
-        const { next, sampleCount, keptCount, seekerDistanceM } = applyMeasuringCloserFarther({
-          candidate,
-          seekerLngLat: seeker,
-          pois,
-          answer
-        });
+        // EXACT measuring:
+        // d_seeker = dist(seeker, nearestX(seeker))
+        // CLOSER  => keep points with distToNearestX < d_seeker - eps  (equivalent to inside union-of-circles radius d_seeker-eps)
+        // FARTHER => keep points with distToNearestX > d_seeker + eps  (equivalent to outside union-of-circles radius d_seeker+eps)
+        const seekerNearest = nearestPoiForPoint(seeker, pois);
+        if (!seekerNearest) {
+          set({ lastToast: `No ${kind} POIs found near seeker.` });
+          return;
+        }
 
-        if (!next) {
+        const epsM = 25;
+        const thresholdM = answer === "CLOSER" ? seekerNearest.meters - epsM : seekerNearest.meters + epsM;
+        const thresholdKm = Math.max(0, thresholdM) / 1000;
+
+        const bufferFeature = buildBufferFromPoints(pois, thresholdKm);
+        const nextFeature = applyPoiWithin(candidateFeature, bufferFeature, answer === "CLOSER");
+
+        if (!nextFeature) {
           set({
             candidate: null,
             lastToast: "No possible area remains.",
@@ -563,38 +593,20 @@ export const useStore = create<MorLagState>((set, get) => {
             redoStack: [],
             history: [
               ...get().history,
-              {
-                id: uid(),
-                ts: Date.now(),
-                type: "MEASURING",
-                kind,
-                answer,
-                poiCount: pois.length,
-                sampleCount,
-                keptCount
-              }
+              { id: uid(), ts: Date.now(), type: "MEASURING", kind, answer, poiCount: pois.length, sampleCount: 0, keptCount: 0 }
             ]
           });
           return;
         }
 
         set({
-          candidate: next,
-          lastToast: `Measuring ${kind} ${answer}: kept ${keptCount}/${sampleCount} (seeker ~${Math.round(seekerDistanceM)}m)`,
+          candidate: nextFeature.geometry,
+          lastToast: `Measuring ${kind} ${answer}: threshold ~${Math.round(thresholdM)}m (${thresholdKm.toFixed(2)}km), ${pois.length} POIs`,
           undoStack: [...get().undoStack, candidate],
           redoStack: [],
           history: [
             ...get().history,
-            {
-              id: uid(),
-              ts: Date.now(),
-              type: "MEASURING",
-              kind,
-              answer,
-              poiCount: pois.length,
-              sampleCount,
-              keptCount
-            }
+            { id: uid(), ts: Date.now(), type: "MEASURING", kind, answer, poiCount: pois.length, sampleCount: 0, keptCount: 0 }
           ]
         });
       } catch (error) {
