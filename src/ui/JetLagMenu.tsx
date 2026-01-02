@@ -267,7 +267,7 @@ export default function JetLagMenu() {
                     type="button"
                     title={title}
                   >
-                    {t.label}
+                    <span className="tileMain">{t.label}</span>
                   </button>
                 );
               })}
@@ -343,7 +343,7 @@ export default function JetLagMenu() {
                   }}
                   type="button"
                 >
-                  {t.label}
+                  <span className="tileMain">{t.label}</span>
                 </button>
               ))}
             </div>
@@ -402,21 +402,19 @@ export default function JetLagMenu() {
                   className="jlTile radar"
                   onClick={() => applyRadar(d.miles, true)}
                   disabled={!seeker || !candidate}
-                  style={{ flexDirection: "column", gap: 2, lineHeight: 1 }}
                 >
-                  <span style={{ fontSize: 10, opacity: 0.8 }}>HIT</span>
-                  <span>{d.label}</span>
+                  <span className="tileSub">HIT</span>
+                  <span className="tileMain">{d.label}</span>
                 </button>
               ))}
               <button
                 className="jlTile radar"
                 onClick={() => setRadarCustomMode("HIT")}
                 disabled={!seeker || !candidate}
-                style={{ flexDirection: "column", gap: 2, lineHeight: 1 }}
                 type="button"
               >
-                <span style={{ fontSize: 10, opacity: 0.8 }}>HIT</span>
-                <span>CUSTOM</span>
+                <span className="tileSub">HIT</span>
+                <span className="tileMain">CUSTOM</span>
               </button>
             </div>
 
@@ -428,21 +426,19 @@ export default function JetLagMenu() {
                   className="jlTile radar"
                   onClick={() => applyRadar(d.miles, false)}
                   disabled={!seeker || !candidate}
-                  style={{ flexDirection: "column", gap: 2, lineHeight: 1 }}
                 >
-                  <span style={{ fontSize: 10, opacity: 0.8 }}>MISS</span>
-                  <span>{d.label}</span>
+                  <span className="tileSub">MISS</span>
+                  <span className="tileMain">{d.label}</span>
                 </button>
               ))}
               <button
                 className="jlTile radar"
                 onClick={() => setRadarCustomMode("MISS")}
                 disabled={!seeker || !candidate}
-                style={{ flexDirection: "column", gap: 2, lineHeight: 1 }}
                 type="button"
               >
-                <span style={{ fontSize: 10, opacity: 0.8 }}>MISS</span>
-                <span>CUSTOM</span>
+                <span className="tileSub">MISS</span>
+                <span className="tileMain">CUSTOM</span>
               </button>
             </div>
 
@@ -507,31 +503,31 @@ export default function JetLagMenu() {
                 className="jlTile thermo"
                 onClick={setStart}
                 disabled={!seeker || !candidate}
-                style={{ flexDirection: "column", gap: 2, lineHeight: 1 }}
               >
-                <span>SET</span><span>START</span>
+                <span className="tileSub">SET</span>
+                <span className="tileMain">START</span>
               </button>
               <button
                 className="jlTile thermo"
                 onClick={setEnd}
                 disabled={!seeker || !candidate}
-                style={{ flexDirection: "column", gap: 2, lineHeight: 1 }}
               >
-                <span>SET</span><span>END</span>
+                <span className="tileSub">SET</span>
+                <span className="tileMain">END</span>
               </button>
               <button
                 className="jlTile thermo"
                 onClick={() => applyThermo(true)}
                 disabled={!candidate || !thermoStart || !thermoEnd}
               >
-                HOTTER
+                <span className="tileMain">HOTTER</span>
               </button>
               <button
                 className="jlTile thermo"
                 onClick={() => applyThermo(false)}
                 disabled={!candidate || !thermoStart || !thermoEnd}
               >
-                COLDER
+                <span className="tileMain">COLDER</span>
               </button>
             </div>
           </div>
@@ -558,12 +554,11 @@ export default function JetLagMenu() {
                     className={`jlTile tentacles${disabled ? " disabled" : ""}`}
                     disabled={disabled}
                     onClick={() => setTentacleSelected({ label: t.label, kind: t.kind, radiusMiles: t.radiusMiles })}
-                    style={{ flexDirection: "column", gap: 2, lineHeight: 1 }}
                     type="button"
                     title={!seeker ? "Requires seeker GPS" : !candidate ? "Requires area" : ""}
                   >
-                    <span>{t.label}</span>
-                    <span style={{ fontSize: "10px", opacity: 0.8 }}>{t.distLabel}</span>
+                    <span className="tileMain">{t.label}</span>
+                    <span className="tileSub">{t.distLabel}</span>
                   </button>
                 );
               })}
@@ -607,7 +602,7 @@ export default function JetLagMenu() {
                   onClick={() => handlePoiClick(kind, label)}
                   disabled={!candidate || !seeker}
                 >
-                  {label}
+                  <span className="tileMain">{label}</span>
                 </button>
               ))}
             </div>

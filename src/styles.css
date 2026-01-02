@@ -1,7 +1,16 @@
 :root {
   font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial;
-  --tile-font-lg: 12px;
-  --tile-font: 11px;
+  --tile-size: 86px;
+  --tile-radius: 14px;
+  --tile-gap: 10px;
+}
+
+@media (max-width: 420px) {
+  :root { --tile-size: 80px; }
+}
+
+@media (min-width: 900px) {
+  :root { --tile-size: 92px; }
 }
 
 /* ============================================
@@ -852,66 +861,78 @@ code {
   hyphens: none;
 }
 
-.jlGrid { display:grid; gap:10px; }
-.jlGrid.matching { grid-template-columns: repeat(4, minmax(0, 1fr)); }
-.jlGrid.measuring { grid-template-columns: repeat(5, minmax(0, 1fr)); }
-.jlGrid.radar { grid-template-columns: repeat(4, minmax(0, 1fr)); }
-.jlGrid.tentacles { grid-template-columns: repeat(4, minmax(0, 1fr)); }
-.jlGrid.poi { grid-template-columns: repeat(4, minmax(0, 1fr)); }
-.jlGrid.thermo { grid-template-columns: repeat(4, minmax(0, 1fr)); }
-@media (max-width: 420px){
-  .jlGrid.measuring { grid-template-columns: repeat(4, minmax(0, 1fr)); }
-  .jlGrid.poi { grid-template-columns: repeat(3, minmax(0, 1fr)); }
-  .jlGrid.thermo { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+/* ============================================
+   TILE GRID (Unified)
+   ============================================ */
+.jlGrid {
+  display: grid;
+  grid-template-columns: repeat(4, var(--tile-size));
+  gap: var(--tile-gap);
+  justify-content: start; /* or center, depending on container */
+}
+
+/* Remove old specific grid overrides to force uniformity */
+.jlGrid.matching,
+.jlGrid.measuring,
+.jlGrid.radar,
+.jlGrid.tentacles,
+.jlGrid.poi,
+.jlGrid.thermo {
+  grid-template-columns: repeat(4, var(--tile-size));
 }
 
 /* MUST be applied to the real tile button class */
 .jlTile {
-  border:none;
-  border-radius:10px;
-  min-height: auto !important; /* Overriding previous min-height */
+  width: var(--tile-size);
+  height: var(--tile-size);
+  border-radius: var(--tile-radius);
+
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+
+  box-sizing: border-box;
+  padding: 8px;
+  overflow: hidden;
+
+  border: none;
+  outline: none;
   
-  /* FORCE SQUARE */
-  aspect-ratio: 1 / 1 !important;
-  width: 100% !important;
-  
-  /* Flex centering */
-  display: flex !important;
-  align-items: center !important;
-  justify-content: center !important;
-  text-align: center !important;
-  
-  /* Padding */
-  padding: 8px !important;
-  
-  /* Font & Text */
-  color:#fff;
-  font-weight:800;
-  font-size: var(--tile-font, 11px) !important;
-  line-height: 1.05 !important;
-  text-transform:uppercase;
-  letter-spacing: 0.4px !important;
-  
-  /* WRAP - up to 2 lines, word-safe */
-  white-space: normal !important;
-  word-break: keep-all !important;
-  overflow-wrap: normal !important;
-  overflow: hidden !important;
-  display: -webkit-box !important;
-  -webkit-box-orient: vertical !important;
-  -webkit-line-clamp: 2 !important;
-  
-  cursor:pointer;
-  user-select:none;
-  min-width: 0;
+  background: #f8f8f8; /* default background if color class missing */
+  cursor: pointer;
+  user-select: none;
 }
+
 .jlTile:active { transform: scale(0.98); }
-.jlTile.disabled { opacity:.35; cursor:not-allowed; }
+.jlTile.disabled { opacity: 0.35; cursor: not-allowed; }
+
+/* Text Styles */
+.tileMain {
+  font-size: 12px;
+  font-weight: 900;
+  line-height: 1.05;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
+  color: inherit;
+}
+
+.tileSub {
+  font-size: 11px;
+  font-weight: 700;
+  margin-top: 4px;
+  white-space: nowrap;
+  opacity: 0.85;
+  color: inherit;
+}
 
 /* Color classes */
-.jlTile.matching, .jlCatIcon.matching { background:#1F2A44; }
-.jlTile.measuring, .jlCatIcon.measuring { background:#2E8B57; }
-.jlTile.radar, .jlCatIcon.radar { background:#E07A2F; }
+.jlTile.matching, .jlCatIcon.matching { background:#1F2A44; color: white; }
+.jlTile.measuring, .jlCatIcon.measuring { background:#2E8B57; color: white; }
+.jlTile.radar, .jlCatIcon.radar { background:#E07A2F; color: white; }
 .jlTile.thermo, .jlCatIcon.thermo { background:#E3B22C; color:#2b2b2b; }
-.jlTile.tentacles, .jlCatIcon.tentacles { background:#6C4AA5; }
-.jlTile.poi, .jlCatIcon.poi { background:#6C4AA5; }
+.jlTile.tentacles, .jlCatIcon.tentacles { background:#6C4AA5; color: white; }
+.jlTile.poi, .jlCatIcon.poi { background:#6C4AA5; color: white; }
