@@ -604,7 +604,7 @@ export default function JetLagMenu() {
               </div>
             )}
 
-            <div className="section-label" style={{ marginTop: "16px", fontSize: "10px", opacity: 0.7 }}>PLACES (OSM)</div>
+            <div className="section-label" style={{ marginTop: "16px", fontSize: "10px", opacity: 0.7 }}>Other tenticle options</div>
             <div className="jlGrid poi">
               {POI_KINDS.map(({ kind, label }) => (
                 <button
