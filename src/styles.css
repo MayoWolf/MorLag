@@ -89,32 +89,31 @@ body {
 
 /* Mobile Layout: Stacked, Global Scroll */
 @media (max-width: 900px) {
-  html, body, #root {
-    height: auto;
-    overflow: auto; /* Allow global scroll */
-  }
-
   .app {
+    /* Mobile split view: scrollable menu, map pinned at bottom */
     flex-direction: column;
-    height: auto;
-    min-height: 100dvh;
-    overflow: visible;
+    height: 100dvh;
+    overflow: hidden;
   }
 
   .sidebar {
     width: 100%;
     max-width: none;
-    height: auto; /* Grow with content */
-    overflow: visible;
+    flex: 1 1 auto;
+    overflow-y: auto;
+    overflow-x: hidden;
+    -webkit-overflow-scrolling: touch;
     border-right: none;
     flex-shrink: 1;
   }
 
-  /* Map gets a fixed height on mobile or fills remaining screen */
+  /* Map stays visible at bottom */
   .mapWrap {
     width: 100%;
-    height: 60vh;
-    min-height: 320px;
+    flex: 0 0 auto;
+    height: 44vh;
+    min-height: 280px;
+    border-top: 1px solid rgba(0,0,0,0.1);
   }
 
   .mapRoot {
