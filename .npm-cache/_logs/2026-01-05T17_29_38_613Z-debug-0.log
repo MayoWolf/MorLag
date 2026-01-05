@@ -7,8 +7,8 @@
 6 silly config load:file:/opt/homebrew/etc/npmrc
 7 verbose title npm run build
 8 verbose argv "run" "build" "--loglevel" "error"
-9 verbose logfile logs-max:10 dir:/Users/wolfnazari/Downloads/MorLag/.npm-cache/_logs/2026-01-02T18_20_00_102Z-
-10 verbose logfile /Users/wolfnazari/Downloads/MorLag/.npm-cache/_logs/2026-01-02T18_20_00_102Z-debug-0.log
+9 verbose logfile logs-max:10 dir:/Users/wolfnazari/Downloads/MorLag/.npm-cache/_logs/2026-01-05T17_29_38_613Z-
+10 verbose logfile /Users/wolfnazari/Downloads/MorLag/.npm-cache/_logs/2026-01-05T17_29_38_613Z-debug-0.log
 11 silly logfile start cleaning logs, removing 1 files
 12 silly logfile done cleaning log files
 13 verbose cwd /Users/wolfnazari/Downloads/MorLag
