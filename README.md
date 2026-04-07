@@ -37,3 +37,7 @@ Then update the import in `src/state/store.ts` to your file name if needed.
 
 ## License
 MIT
+
+## Code of Conduct
+
+Please read our [Code of Conduct](./CODE_OF_CONDUCT.md) before contributing.
