@@ -1,6 +1,7 @@
 import { create } from "zustand";
+import { createJSONStorage, persist } from "zustand/middleware";
 import type { Feature, FeatureCollection, Polygon, MultiPolygon } from "geojson";
-import { bbox as turfBbox } from "@turf/turf";
+import { area as turfArea, bbox as turfBbox } from "@turf/turf";
 
 import countriesSample from "../data/countries.sample.geojson";
 import { applyRadar } from "../geo/radar";
@@ -102,6 +103,7 @@ function findCountry(countries: CountryFeature[], isoA2: string): CountryFeature
 type MorLagState = {
   countries: CountryFeature[];
   selectedIsoA2: string;
+  baseCandidate: AnyPoly | null;
   candidate: AnyPoly | null;
 
   // UI busy overlay
@@ -128,6 +130,7 @@ type MorLagState = {
 
   setCountry: (isoA2: string) => void;
   updateSeekerFromGPS: () => Promise<void>;
+  setSeekerManually: (lngLat: [number, number]) => void;
   startGPSTracking: () => void;
   stopGPSTracking: () => void;
 
@@ -153,12 +156,34 @@ type MorLagState = {
   setBusy: (isBusy: boolean, message?: string) => void;
 };
 
-export const useStore = create<MorLagState>((set, get) => {
+function polyAreaSqM(geom: AnyPoly | null): number {
+  if (!geom) return 0;
+  return turfArea({ type: "Feature", geometry: geom, properties: {} } as Feature<AnyPoly>);
+}
+
+function summarizeGeometryChange(before: AnyPoly, after: AnyPoly | null) {
+  const beforeArea = polyAreaSqM(before);
+  const afterArea = polyAreaSqM(after);
+  const removedArea = Math.max(0, beforeArea - afterArea);
+  const percentRemoved = beforeArea > 0 ? (removedArea / beforeArea) * 100 : 0;
+  const percentRemaining = beforeArea > 0 ? (afterArea / beforeArea) * 100 : 0;
+
+  return {
+    beforeArea,
+    afterArea,
+    percentRemoved,
+    percentRemaining,
+    isNoChange: percentRemoved < 0.01
+  };
+}
+
+export const useStore = create<MorLagState>()(persist((set, get) => {
   const countries = getCountries();
 
   return {
     countries,
     selectedIsoA2: "",
+    baseCandidate: null,
     candidate: null,
 
     isBusy: false,
@@ -190,6 +215,7 @@ export const useStore = create<MorLagState>((set, get) => {
 
       set({
         selectedIsoA2: iso,
+        baseCandidate: f.geometry as AnyPoly,
         candidate: f.geometry as AnyPoly,
         undoStack: [],
         redoStack: [],
@@ -228,6 +254,21 @@ export const useStore = create<MorLagState>((set, get) => {
         seekerLngLat: [lng, lat],
         seekerAccuracyM: pos.coords.accuracy ?? null,
         seekerLastUpdatedMs: now
+      });
+    },
+
+    setSeekerManually: (lngLat: [number, number]) => {
+      const [lng, lat] = lngLat;
+      if (!Number.isFinite(lng) || !Number.isFinite(lat) || lng < -180 || lng > 180 || lat < -90 || lat > 90) {
+        set({ lastToast: "Enter valid coordinates as longitude, latitude." });
+        return;
+      }
+
+      set({
+        seekerLngLat: [lng, lat],
+        seekerAccuracyM: null,
+        seekerLastUpdatedMs: Date.now(),
+        lastToast: "Seeker position set manually."
       });
     },
 
@@ -300,16 +341,34 @@ export const useStore = create<MorLagState>((set, get) => {
       if (!candidate || !seeker) return;
 
       const next = applyRadar(candidate, seeker, radiusMiles, hit);
-      if (!next) return;
+      const historyItem: HistoryItem = { id: uid(), ts: Date.now(), type: "RADAR", radiusMiles, hit, seeker };
+      const stats = summarizeGeometryChange(candidate, next);
+
+      if (!next) {
+        set({
+          candidate: null,
+          lastToast: "No possible area remains.",
+          undoStack: [...get().undoStack, candidate],
+          redoStack: [],
+          history: [...get().history, historyItem]
+        });
+        return;
+      }
+
+      if (stats.isNoChange) {
+        set({
+          lastToast: `Radar ${hit ? "hit" : "miss"} ${radiusMiles} mi: 0 change occurred.`,
+          history: [...get().history, historyItem]
+        });
+        return;
+      }
 
       set({
         candidate: next,
+        lastToast: `Radar ${hit ? "hit" : "miss"} ${radiusMiles} mi: ${stats.percentRemaining.toFixed(1)}% remains.`,
         undoStack: [...get().undoStack, candidate],
         redoStack: [],
-        history: [
-          ...get().history,
-          { id: uid(), ts: Date.now(), type: "RADAR", radiusMiles, hit, seeker }
-        ]
+        history: [...get().history, historyItem]
       });
     },
 
@@ -320,16 +379,34 @@ export const useStore = create<MorLagState>((set, get) => {
       if (!candidate || !a || !b) return;
 
       const next = applyThermometer(candidate, a, b, hotter);
-      if (!next) return;
+      const historyItem: HistoryItem = { id: uid(), ts: Date.now(), type: "THERMOMETER", hotter, start: a, end: b };
+      const stats = summarizeGeometryChange(candidate, next);
+
+      if (!next) {
+        set({
+          candidate: null,
+          lastToast: "No possible area remains.",
+          undoStack: [...get().undoStack, candidate],
+          redoStack: [],
+          history: [...get().history, historyItem]
+        });
+        return;
+      }
+
+      if (stats.isNoChange) {
+        set({
+          lastToast: `Thermometer ${hotter ? "hotter" : "colder"}: 0 change occurred.`,
+          history: [...get().history, historyItem]
+        });
+        return;
+      }
 
       set({
         candidate: next,
+        lastToast: `Thermometer ${hotter ? "hotter" : "colder"}: ${stats.percentRemaining.toFixed(1)}% remains.`,
         undoStack: [...get().undoStack, candidate],
         redoStack: [],
-        history: [
-          ...get().history,
-          { id: uid(), ts: Date.now(), type: "THERMOMETER", hotter, start: a, end: b }
-        ]
+        history: [...get().history, historyItem]
       });
     },
 
@@ -383,6 +460,27 @@ export const useStore = create<MorLagState>((set, get) => {
             lastToast: "No possible area remains.",
             undoStack: [...get().undoStack, candidate],
             redoStack: [],
+            history: [
+              ...get().history,
+              {
+                id: uid(),
+                ts: Date.now(),
+                type: "MATCHING",
+                kind,
+                answer,
+                poiCount: pois.length,
+                sampleCount: 0,
+                keptCount: 0
+              }
+            ]
+          });
+          return;
+        }
+
+        const stats = summarizeGeometryChange(candidate, next);
+        if (stats.isNoChange) {
+          set({
+            lastToast: `Matching ${kind} ${answer}: 0 change occurred (${pois.length} POIs).`,
             history: [
               ...get().history,
               {
@@ -542,9 +640,30 @@ export const useStore = create<MorLagState>((set, get) => {
           return;
         }
 
+        const stats = summarizeGeometryChange(candidate, clipped);
+        if (stats.isNoChange) {
+          set({
+            lastToast: `Matching admin${level} ${answer}: 0 change occurred (kept ${kept.length}/${points.length}).`,
+            history: [
+              ...get().history,
+              {
+                id: uid(),
+                ts: Date.now(),
+                type: "MATCHING",
+                kind: `admin${level}`,
+                answer,
+                poiCount: 0,
+                sampleCount: points.length,
+                keptCount: kept.length
+              }
+            ]
+          });
+          return;
+        }
+
         set({
           candidate: clipped,
-          lastToast: `Matching admin${level} ${answer}: kept ${kept.length}/${points.length}`,
+          lastToast: `Matching admin${level} ${answer}: ${stats.percentRemaining.toFixed(1)}% remains (kept ${kept.length}/${points.length})`,
           undoStack: [...get().undoStack, candidate],
           redoStack: [],
           history: [
@@ -621,9 +740,21 @@ export const useStore = create<MorLagState>((set, get) => {
           return;
         }
 
+        const stats = summarizeGeometryChange(candidate, nextFeature.geometry);
+        if (stats.isNoChange) {
+          set({
+            lastToast: `Measuring ${kind} ${answer}: 0 change occurred (${pois.length} POIs).`,
+            history: [
+              ...get().history,
+              { id: uid(), ts: Date.now(), type: "MEASURING", kind, answer, poiCount: pois.length, sampleCount: 0, keptCount: 0 }
+            ]
+          });
+          return;
+        }
+
         set({
           candidate: nextFeature.geometry,
-          lastToast: `Measuring ${kind} ${answer}: threshold ~${Math.round(thresholdM)}m (${thresholdKm.toFixed(2)}km), ${pois.length} POIs`,
+          lastToast: `Measuring ${kind} ${answer}: ${stats.percentRemaining.toFixed(1)}% remains, threshold ~${Math.round(thresholdM)}m (${pois.length} POIs)`,
           undoStack: [...get().undoStack, candidate],
           redoStack: [],
           history: [
@@ -664,10 +795,10 @@ export const useStore = create<MorLagState>((set, get) => {
     },
 
     resetCandidateToCountry: () => {
-      // Stop GPS tracking when resetting
-      get().stopGPSTracking();
+      const baseCandidate = get().baseCandidate;
       set({
-        candidate: null,
+        candidate: baseCandidate,
+        lastToast: baseCandidate ? "Area reset to the selected starting area." : "No selected area to reset to.",
         undoStack: [],
         redoStack: [],
         thermoStart: null,
@@ -708,6 +839,7 @@ export const useStore = create<MorLagState>((set, get) => {
       const geometry = normalizeGeometry(result);
       
       set({
+        baseCandidate: geometry,
         candidate: geometry,
         undoStack: [],
         redoStack: [],
@@ -763,7 +895,7 @@ export const useStore = create<MorLagState>((set, get) => {
           } else {
             // NO and no POIs = no change
             set({
-              lastToast: `No ${kind}s found. Area unchanged.`,
+              lastToast: `No ${kind}s found. 0 change occurred.`,
               history: [
                 ...get().history,
                 { id: uid(), ts: Date.now(), type: "POI_WITHIN", kind, radiusMiles, answer, poiCount: 0 }
@@ -791,9 +923,21 @@ export const useStore = create<MorLagState>((set, get) => {
             ]
           });
         } else {
+          const stats = summarizeGeometryChange(candidate, next.geometry);
+          if (stats.isNoChange) {
+            set({
+              lastToast: `${kind} ${radiusMiles} mi ${answer}: 0 change occurred (${points.length} found).`,
+              history: [
+                ...get().history,
+                { id: uid(), ts: Date.now(), type: "POI_WITHIN", kind, radiusMiles, answer, poiCount: points.length }
+              ]
+            });
+            return;
+          }
+
           set({
             candidate: next.geometry,
-            lastToast: `${kind}: ${points.length} found in search area`,
+            lastToast: `${kind} ${radiusMiles} mi ${answer}: ${stats.percentRemaining.toFixed(1)}% remains (${points.length} found)`,
             undoStack: [...get().undoStack, candidate],
             redoStack: [],
             history: [
@@ -812,4 +956,29 @@ export const useStore = create<MorLagState>((set, get) => {
       }
     }
   };
-});
+}, {
+  name: "morlag-session-v1",
+  storage: createJSONStorage(() => localStorage),
+  partialize: (state) => ({
+    selectedIsoA2: state.selectedIsoA2,
+    baseCandidate: state.baseCandidate,
+    candidate: state.candidate,
+    seekerLngLat: state.seekerLngLat,
+    seekerAccuracyM: state.seekerAccuracyM,
+    seekerLastUpdatedMs: state.seekerLastUpdatedMs,
+    thermoStart: state.thermoStart,
+    thermoEnd: state.thermoEnd,
+    history: state.history,
+    undoStack: state.undoStack,
+    redoStack: state.redoStack,
+    selectedAreaLabel: state.selectedAreaLabel
+  }),
+  onRehydrateStorage: () => (state) => {
+    if (!state) return;
+    state.gpsWatchId = null;
+    state.isTrackingGPS = false;
+    state.isBusy = false;
+    state.busyMessage = "Loading…";
+    state.lastToast = state.candidate ? "Restored previous MorLag session." : null;
+  }
+}));

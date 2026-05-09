@@ -1,4 +1,4 @@
-import React, { useEffect } from "react";
+import React, { useState } from "react";
 import { useStore } from "../state/store";
 
 export default function Controls() {
@@ -8,6 +8,7 @@ export default function Controls() {
   const lastUpdatedMs = useStore(s => s.seekerLastUpdatedMs);
   const isTrackingGPS = useStore(s => s.isTrackingGPS);
   const updateSeeker = useStore(s => s.updateSeekerFromGPS);
+  const setSeekerManually = useStore(s => s.setSeekerManually);
   const startTracking = useStore(s => s.startGPSTracking);
   const stopTracking = useStore(s => s.stopGPSTracking);
 
@@ -20,6 +21,7 @@ export default function Controls() {
   const setSearchQuery = useStore(s => s.setSearchQuery);
   const runSearch = useStore(s => s.runSearch);
   const selectSearchResult = useStore(s => s.selectSearchResult);
+  const [manualCoords, setManualCoords] = useState("");
 
   const handleSearch = async () => {
     try {
@@ -32,6 +34,15 @@ export default function Controls() {
   const truncateName = (name: string, maxLength: number = 50) => {
     if (name.length <= maxLength) return name;
     return name.slice(0, maxLength - 3) + "...";
+  };
+
+  const handleManualCoords = () => {
+    const parts = manualCoords
+      .split(/[,\s]+/)
+      .map(part => Number(part.trim()))
+      .filter(Number.isFinite);
+    if (parts.length < 2) return;
+    setSeekerManually([parts[0], parts[1]]);
   };
 
   return (
@@ -133,6 +144,18 @@ export default function Controls() {
               No seeker position yet.
             </div>
           )}
+          <div className="row">
+            <input
+              type="text"
+              value={manualCoords}
+              onChange={(e) => setManualCoords(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") handleManualCoords();
+              }}
+              placeholder="Manual lng, lat"
+            />
+            <button className="btn" onClick={handleManualCoords}>Set Pin</button>
+          </div>
         </div>
       </section>
 

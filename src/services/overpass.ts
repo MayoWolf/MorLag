@@ -6,22 +6,48 @@ interface CacheEntry {
 
 const cache = new Map<string, CacheEntry>();
 const CACHE_TTL = 15 * 60 * 1000; // 15 minutes
+const STORAGE_PREFIX = "morlag-poi-cache:";
 
 function getCache(key: string): any | null {
   const entry = cache.get(key);
-  if (!entry) return null;
+  if (!entry) {
+    try {
+      const stored = window.localStorage.getItem(`${STORAGE_PREFIX}${key}`);
+      if (!stored) return null;
+      const parsed = JSON.parse(stored) as CacheEntry;
+      if (Date.now() > parsed.expires) {
+        window.localStorage.removeItem(`${STORAGE_PREFIX}${key}`);
+        return null;
+      }
+      cache.set(key, parsed);
+      return parsed.data;
+    } catch {
+      return null;
+    }
+  }
   if (Date.now() > entry.expires) {
     cache.delete(key);
+    try {
+      window.localStorage.removeItem(`${STORAGE_PREFIX}${key}`);
+    } catch {
+      // Ignore storage cleanup failures.
+    }
     return null;
   }
   return entry.data;
 }
 
 function setCache(key: string, data: any): void {
-  cache.set(key, {
+  const entry = {
     data,
     expires: Date.now() + CACHE_TTL
-  });
+  };
+  cache.set(key, entry);
+  try {
+    window.localStorage.setItem(`${STORAGE_PREFIX}${key}`, JSON.stringify(entry));
+  } catch {
+    // Large POI responses can exceed storage quota; memory cache still helps for this tab.
+  }
 }
 
 // Round bbox to 2 decimals for cache key
@@ -104,4 +130,3 @@ export async function testOverpass(kind: string): Promise<{ count: number; point
     points: data.points
   };
 }
-

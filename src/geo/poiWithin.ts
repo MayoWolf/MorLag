@@ -17,13 +17,14 @@ export function expandBbox(
   // 1 degree longitude ≈ 111.320 km * cos(latitude)
   const latMid = (south + north) / 2;
   const latPadDeg = padKm / 110.574;
-  const lonPadDeg = padKm / (111.320 * Math.cos((latMid * Math.PI) / 180));
+  const cosLat = Math.max(0.01, Math.abs(Math.cos((latMid * Math.PI) / 180)));
+  const lonPadDeg = padKm / (111.320 * cosLat);
   
   return [
-    south - latPadDeg,
-    west - lonPadDeg,
-    north + latPadDeg,
-    east + lonPadDeg
+    Math.max(-90, south - latPadDeg),
+    Math.max(-180, west - lonPadDeg),
+    Math.min(90, north + latPadDeg),
+    Math.min(180, east + lonPadDeg)
   ];
 }
 
@@ -168,4 +169,3 @@ export function tentaclesFilterByWithinRadius(
 ): Feature<AnyPoly> | null {
   return applyPoiWithin(candidate, bufferFeature, answer === "YES");
 }
-

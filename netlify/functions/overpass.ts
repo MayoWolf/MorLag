@@ -134,13 +134,22 @@ export const handler = async (event: any) => {
   const west = parseFloat(event.queryStringParameters?.west || "");
   const north = parseFloat(event.queryStringParameters?.north || "");
   const east = parseFloat(event.queryStringParameters?.east || "");
-  const limit = parseInt(event.queryStringParameters?.limit || "800", 10);
+  const requestedLimit = parseInt(event.queryStringParameters?.limit || "800", 10);
+  const limit = Number.isFinite(requestedLimit) ? Math.min(Math.max(requestedLimit, 1), 2500) : 800;
 
   if (!kind || isNaN(south) || isNaN(west) || isNaN(north) || isNaN(east)) {
     return {
       statusCode: 400,
       headers,
       body: JSON.stringify({ error: "Missing or invalid parameters: kind, south, west, north, east required" })
+    };
+  }
+
+  if (south < -90 || north > 90 || west < -180 || east > 180 || south >= north || west >= east) {
+    return {
+      statusCode: 400,
+      headers,
+      body: JSON.stringify({ error: "Invalid bbox bounds" })
     };
   }
 
@@ -223,4 +232,3 @@ export const handler = async (event: any) => {
     };
   }
 };
-

@@ -114,21 +114,21 @@ const RADAR_DISTANCES: Array<{ miles: number; label: string }> = [
 ];
 
 type MatchingTile =
-  | { id: "airport"; label: "Airport"; kind: OsmKind; disabled?: false }
-  | { id: "rail"; label: "Rail Station"; kind: OsmKind; disabled?: false }
-  | { id: "transit_line"; label: "Transit Line"; kind: OsmKind; disabled?: false }
-  | { id: "highway"; label: "Highway Access"; kind: OsmKind; disabled?: false }
-  | { id: "admin1"; label: "Admin 1"; adminLevel: 1; disabled?: false }
-  | { id: "admin2"; label: "Admin 2"; adminLevel: 2; disabled?: false }
-  | { id: "admin3"; label: "Admin 3"; adminLevel: 3; disabled?: false }
-  | { id: "admin4"; label: "Admin 4"; adminLevel: 4; disabled?: false }
-  | { id: "mountain"; label: "Mountain"; kind: OsmKind; disabled?: false }
-  | { id: "park"; label: "Park"; kind: OsmKind; disabled?: false }
-  | { id: "water"; label: "Water / Coast"; kind: OsmKind; disabled?: false }
-  | { id: "landmass"; label: "Landmass"; disabled: false; kind?: OsmKind }
-  | { id: "hospital"; label: "Hospital"; kind: OsmKind; disabled?: false }
-  | { id: "library"; label: "Library"; kind: OsmKind; disabled?: false }
-  | { id: "government"; label: "Government"; kind: OsmKind; disabled?: false };
+  | { id: "airport"; label: "Airport"; kind: OsmKind; disabled?: boolean }
+  | { id: "rail"; label: "Rail Station"; kind: OsmKind; disabled?: boolean }
+  | { id: "transit_line"; label: "Transit Line"; kind: OsmKind; disabled?: boolean }
+  | { id: "highway"; label: "Highway Access"; kind: OsmKind; disabled?: boolean }
+  | { id: "admin1"; label: "Admin 1"; adminLevel: 1; disabled?: boolean }
+  | { id: "admin2"; label: "Admin 2"; adminLevel: 2; disabled?: boolean }
+  | { id: "admin3"; label: "Admin 3"; adminLevel: 3; disabled?: boolean }
+  | { id: "admin4"; label: "Admin 4"; adminLevel: 4; disabled?: boolean }
+  | { id: "mountain"; label: "Mountain"; kind: OsmKind; disabled?: boolean }
+  | { id: "park"; label: "Park"; kind: OsmKind; disabled?: boolean }
+  | { id: "water"; label: "Water / Coast"; kind: OsmKind; disabled?: boolean }
+  | { id: "landmass"; label: "Landmass"; disabled: true; kind?: OsmKind }
+  | { id: "hospital"; label: "Hospital"; kind: OsmKind; disabled?: boolean }
+  | { id: "library"; label: "Library"; kind: OsmKind; disabled?: boolean }
+  | { id: "government"; label: "Government"; kind: OsmKind; disabled?: boolean };
 
 const MATCHING_TILES: MatchingTile[] = [
   { id: "airport", label: "Airport", kind: "airport" },
@@ -142,7 +142,7 @@ const MATCHING_TILES: MatchingTile[] = [
   { id: "mountain", label: "Mountain", kind: "peak" },
   { id: "park", label: "Park", kind: "park" },
   { id: "water", label: "Water / Coast", kind: "water" },
-  { id: "landmass", label: "Landmass", disabled: false },
+  { id: "landmass", label: "Landmass", disabled: true },
   { id: "hospital", label: "Hospital", kind: "hospital" },
   { id: "library", label: "Library", kind: "library" },
   { id: "government", label: "Government", kind: "government" }
@@ -265,7 +265,7 @@ export default function JetLagMenu() {
               {MATCHING_TILES.map((t) => {
                 const disabled = t.disabled || !candidate || !seeker;
                 const title =
-                  t.id === "landmass" ? "Landmass matching" : !seeker ? "Requires seeker GPS" : !candidate ? "Requires area" : "";
+                  t.id === "landmass" ? "Landmass matching needs better map data before it can be trusted." : !seeker ? "Requires seeker GPS" : !candidate ? "Requires area" : "";
                 return (
                   <button
                     key={t.id}
@@ -604,7 +604,7 @@ export default function JetLagMenu() {
               </div>
             )}
 
-            <div className="section-label" style={{ marginTop: "16px", fontSize: "10px", opacity: 0.7 }}>Other tenticle options</div>
+            <div className="section-label" style={{ marginTop: "16px", fontSize: "10px", opacity: 0.7 }}>Other tentacle options</div>
             <div className="jlGrid poi">
               {POI_KINDS.map(({ kind, label }) => (
                 <button
